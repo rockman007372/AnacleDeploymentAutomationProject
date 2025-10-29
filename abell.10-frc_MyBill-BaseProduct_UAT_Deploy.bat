@@ -5,8 +5,8 @@ rem Get start date/time
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd'"') do set datetrf=%%a
 
 rem Define source and destination directories. Space in path is allowed. 
-set "SolutionDirectory=C:\Anacle\v10-Utility-Testing\abell.v10.0\abell.root\abell"
-set "DestinationDirectory=D:\deployment\UtilityTesting\UAT_%datetrf%"
+set "SolutionDirectory=C:\Anacle\SP\simplicity\abell.root\abell"
+set "DestinationDirectory=D:\deployment\SP\UAT_%datetrf%"
 set "LogFilePath=%DestinationDirectory%\UAT_%datetrf%.log"
 set "ZipFilePath=%DestinationDirectory%\UAT_%datetrf%.zip"
 set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
