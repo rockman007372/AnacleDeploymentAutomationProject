@@ -4,9 +4,9 @@ for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd'"') do set datet
 
 rem 1. Define source and destination directories. Space in path is allowed. 
 set "SolutionDirectory=C:\Anacle\SP\simplicity\abell.root\abell"
-set "DestinationDirectory=D:\deployment\SP\UAT_%datetrf%\"
-set "ZipFilePath=%DestinationDirectory%..\UAT_%datetrf%.zip"
-set "LogFilePath=%DestinationDirectory%..\UAT_%datetrf%.log"
+set "DestinationDirectory=D:\deployment\SP\UAT_%datetrf%"
+set "ZipFilePath=%DestinationDirectory%\UAT_%datetrf%.zip"
+set "LogFilePath=%DestinationDirectory%\UAT_%datetrf%.log"
 set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
 
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMddHHmmss'"') do set MyDATE=%%a
