@@ -101,7 +101,7 @@ echo. >> %LogFilePath%
 rem 5. Complete
 :Complete
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd_HHmmss'"') do set EndDATE=%%a
-echo [STEP 5/5] Build Completed >> %LogFilePath%
+echo [STEP 5/5] View Build Status >> %LogFilePath%
 echo ---------------------------------------------------------------------------- >> %LogFilePath%
 echo. >> %LogFilePath%
 echo ============================================================================ >> %LogFilePath%
