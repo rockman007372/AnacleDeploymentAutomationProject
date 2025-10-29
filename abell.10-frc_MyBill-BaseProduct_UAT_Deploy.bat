@@ -4,12 +4,19 @@ setlocal enabledelayedexpansion
 rem Get start date/time
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd'"') do set datetrf=%%a
 
-rem 1. Define source and destination directories. Space in path is allowed. 
-set "SolutionDirectory="
-set "DestinationDirectory="
-set "ZipFilePath=%DestinationDirectory%\UAT_%datetrf%.zip"
+rem Define source and destination directories. Space in path is allowed. 
+set "SolutionDirectory=C:\Anacle\v10-Utility-Testing\abell.v10.0\abell.root\abell"
+set "DestinationDirectory=D:\deployment\UtilityTesting\UAT_%datetrf%"
 set "LogFilePath=%DestinationDirectory%\UAT_%datetrf%.log"
+set "ZipFilePath=%DestinationDirectory%\UAT_%datetrf%.zip"
 set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
+
+rem Ensure log directory exists
+for %%I in ("%LogFilePath%") do set "LogDir=%%~dpI"
+if not exist "%LogDir%" (
+    echo Creating log directory: "%LogDir%"
+    mkdir "%LogDir%"
+)
 
 rem Initialize log file with header
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd_HHmmss'"') do set MyDATE=%%a
@@ -34,16 +41,9 @@ if not exist "%SolutionDirectory%" (
     goto CompleteWithError
 )
 echo   [OK] Solution directory exists >> %LogFilePath%
-
-rem Check if destination already exists
-if exist "%DestinationDirectory%" (
-    echo   [ERROR] Destination folder already exists: %DestinationDirectory% >> %LogFilePath%
-    goto CompleteWithError
-)
-echo   [OK] Destination folder is available >> %LogFilePath%
 echo. >> %LogFilePath%
 
-rem 2. Create destination directory structure
+rem 1. Create destination directory structure
 echo [STEP 1/5] Creating Directory Structure >> %LogFilePath%
 echo ---------------------------------------------------------------------------- >> %LogFilePath%
 
@@ -56,26 +56,15 @@ call:CreateDirectory "%DestinationDirectory%\TPAPI\"
 call:CreateDirectory "%DestinationDirectory%\ConfigFiles\"
 echo. >> %LogFilePath%
 
-rem 3. Copy files from source to destination
+rem 2. Copy files from source to destination
 echo [STEP 2/5] Copying Files >> %LogFilePath%
 echo ---------------------------------------------------------------------------- >> %LogFilePath%
 
-echo   Copying webapp files... >> %LogFilePath%
-xcopy "%SolutionDirectory%\webapp\." "%DestinationDirectory%\webapp\" /e /f /y >> %LogFilePath% 2>&1
-echo   [OK] Webapp files copied >> %LogFilePath%
-echo. >> %LogFilePath%
+call :CopyAndLog "webapp" "%SolutionDirectory%\webapp" "%DestinationDirectory%\webapp"
+call :CopyAndLog "service" "%SolutionDirectory%\service\bin\debug" "%DestinationDirectory%\service"
+call :CopyAndLog "TPAPI" "%SolutionDirectory%\AnacleAPI.Interface\bin\app.publish" "%DestinationDirectory%\TPAPI"
 
-echo   Copying service files... >> %LogFilePath%
-xcopy "%SolutionDirectory%\service\bin\debug\." "%DestinationDirectory%\service\" /e /f /y >> %LogFilePath% 2>&1
-echo   [OK] Service files copied >> %LogFilePath%
-echo. >> %LogFilePath%
-
-echo   Copying TPAPI files... >> %LogFilePath%
-xcopy "%SolutionDirectory%\AnacleAPI.Interface\bin\app.publish\." "%DestinationDirectory%\TPAPI\" /e /f /y >> %LogFilePath% 2>&1
-echo   [OK] TPAPI files copied >> %LogFilePath%
-echo. >> %LogFilePath%
-
-rem 4. Delete config files (Move to ConfigFiles folder)
+rem 3. Delete config files (Move to ConfigFiles folder)
 echo [STEP 3/5] Managing Configuration Files >> %LogFilePath%
 echo ---------------------------------------------------------------------------- >> %LogFilePath%
 
@@ -91,7 +80,7 @@ call:DeleteConfigFile "%DestinationDirectory%\service\LogicLayer.dll.config"
 call:DeleteConfigFile "%DestinationDirectory%\TPAPI\Web.config"
 echo. >> %LogFilePath%
 
-rem 5. Zip the deployment folders (webapp, service, TPAPI)
+rem 4. Zip the deployment folders (webapp, service, TPAPI)
 echo [STEP 4/5] Creating Deployment Package >> %LogFilePath%
 echo ---------------------------------------------------------------------------- >> %LogFilePath%
 echo   Compressing: webapp, service, TPAPI >> %LogFilePath%
@@ -99,7 +88,7 @@ echo   Output: %ZipFilePath% >> %LogFilePath%
 echo   Compression Level: Ultra (mx=9) >> %LogFilePath%
 echo. >> %LogFilePath%
 
-"%SEVENZIP%" a -tzip "%ZipFilePath%" "%DestinationDirectory%\webapp" "%DestinationDirectory%\service" "%DestinationDirectory%\TPAPI" -mx=9 >> %LogFilePath% 2>&1
+"%SEVENZIP%" a -tzip "%ZipFilePath%" "%DestinationDirectory%\webapp" "%DestinationDirectory%\service" "%DestinationDirectory%\TPAPI" -mx=9 
 
 if %errorlevel%==0 (
     echo   [OK] Deployment package created successfully >> %LogFilePath%
@@ -109,7 +98,7 @@ if %errorlevel%==0 (
 )
 echo. >> %LogFilePath%
 
-rem 6. Complete
+rem 5. Complete
 :Complete
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd_HHmmss'"') do set EndDATE=%%a
 echo [STEP 5/5] Build Completed >> %LogFilePath%
@@ -164,8 +153,40 @@ if exist "%tempConfigFileToDelete%" (
         echo   [MOVED] %tempConfigFileToDelete% >> %LogFilePath%
     ) else (
         echo   [ERROR] Failed to move: %tempConfigFileToDelete% >> %LogFilePath%
+		echo   ErrorLevel: %errorlevel% >> %LogFilePath%
+		goto CompleteWithError
     )
 ) else (
     echo   [SKIPPED] Not found: %tempConfigFileToDelete% >> %LogFilePath%
 )
+goto :eof
+
+:CopyAndLog
+setlocal
+set "NAME=%~1"
+set "SRC=%~2"
+set "DST=%~3"
+
+echo   Copying %NAME% files... >> "%LogFilePath%"
+
+rem Ensure source exists
+if not exist "%SRC%\" (
+    echo   [ERROR] Source folder missing: %SRC% >> "%LogFilePath%"
+    echo. >> "%LogFilePath%"
+    endlocal
+    goto :eof
+)
+
+rem Perform actual copy quietly
+xcopy "%SRC%\." "%DST%\" /e /y /i /q >nul 2>&1
+set "XCOPY_RESULT=!errorlevel!"
+
+if "!XCOPY_RESULT!"=="0" (
+    echo   [OK] %NAME% files copied >> "%LogFilePath%"
+) else (
+    echo   [ERROR] Failed to copy %NAME% files (errorlevel=!XCOPY_RESULT!) >> "%LogFilePath%"
+)
+
+echo. >> "%LogFilePath%"
+endlocal
 goto :eof
