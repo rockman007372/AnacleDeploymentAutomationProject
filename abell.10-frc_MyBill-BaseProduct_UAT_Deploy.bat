@@ -5,7 +5,9 @@ for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd'"') do set datet
 rem 1. Define source and destination directories. Space in path is allowed. 
 set "SolutionDirectory=C:\Anacle\SP\simplicity\abell.root\abell"
 set "DestinationDirectory=D:\deployment\SP\UAT_%datetrf%\"
-set "LogFilePath=D:\deployment\SP\UAT_%datetrf%.log"
+set "ZipFilePath=%DestinationDirectory%..\UAT_%datetrf%.zip"
+set "LogFilePath=%DestinationDirectory%..\UAT_%datetrf%.log"
+set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
 
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMddHHmmss'"') do set MyDATE=%%a
 echo ^<---- Start at %MyDATE% ----^> >> %LogFilePath%
@@ -23,6 +25,8 @@ if exist "%DestinationDirectory%" (
 )
 
 echo LogFilePath: %LogFilePath% >> %LogFilePath%
+echo ZipFilePath: %ZipFilePath% >> %LogFilePath%
+
 
 rem 2. Create destination directory structure.
 echo ^<---- Create folders ----^> >> %LogFilePath%
@@ -55,7 +59,11 @@ call:DeleteConfigFile "%DestinationDirectory%\service\LogicLayer.dll.config"
 
 call:DeleteConfigFile "%DestinationDirectory%\TPAPI\Web.config"
 
-rem 5. Complete
+rem 5. Zip the deployment folders (webapp, service, TPAPI)
+echo ^<---- Zip deployment folder ----^> >> %LogFilePath%
+"%SEVENZIP%" a -tzip "%ZipFilePath%" "%DestinationDirectory%\webapp" "%DestinationDirectory%\service" "%DestinationDirectory%\TPAPI" -mx=9 >> %LogFilePath% 2>&1
+
+rem 6. Complete
 :Complete
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd_HHmmss'"') do set EndDATE=%%a
 echo ^<---- Complete at %EndDATE% ----^> >> %LogFilePath%
@@ -63,7 +71,6 @@ echo .>> %LogFilePath%
 start notepad "%LogFilePath%"
 start "" "%DestinationDirectory%"
 exit
-
 
 :CompleteWithError
 for /f %%a in ('powershell -Command "Get-Date -Format 'yyyyMMdd_HHmmss'"') do set EndDATE=%%a
