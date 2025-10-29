@@ -14,6 +14,12 @@ echo SolutionDirectory: %SolutionDirectory% >> %LogFilePath%
 echo DestinationDirectory: %DestinationDirectory% >> %LogFilePath%
 echo LogFilePath: %LogFilePath% >> %LogFilePath%
 
+rem Check if solution directory exists
+if not exist "%SolutionDirectory%" (
+	echo ERROR: Solution directory does not exist: %SolutionDirectory%    >> %LogFilePath% 2>&1
+	goto CompleteWithError
+)
+
 rem 2. Create destination directory structure.
 echo ^<---- Create folders ----^> >> %LogFilePath%
 
