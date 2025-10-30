@@ -1,0 +1,9 @@
+{
+  "solutionDir": "C:\\Anacle\\SP\\simplicity\\abell.root\\abell", 
+  "destinationDir": "D:\\deployment\\SP",
+  "foldersToCopy": ["webapp", "service", "TPAPI"],
+  "removeConfigFiles": true,
+  "zipOutput": true,
+  "use7Zip": true,
+  "sevenZipPath": "C:\\Program Files\\7-Zip\\7z.exe"
+}
