@@ -37,13 +37,13 @@ echo.
 echo All backups completed!
 
 :: Step 2: Stop the services
-call disable_services.bat || goto :error
+call stop_services.bat "Anacle.EAM v10.0 Simplicity Service (MyBill v10)" "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)" || goto :error
 
 :: Step 3: Extract deployment file in respective folders
 call extract_deployment.bat || goto :error
 
 :: Step 4: Enable services again
-call enable_services.bat || goto :error
+call start_services.bat "Anacle.EAM v10.0 Simplicity Service (MyBill v10)" "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)" || goto :error
 
 :error
 echo.
