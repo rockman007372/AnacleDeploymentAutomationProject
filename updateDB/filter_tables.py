@@ -1,11 +1,12 @@
-import re
 from pathlib import Path
+import subprocess
 import sys
 
+# Where the sql scripts are located
 script_dir = Path("C:/Users/rockm/Downloads")
 
 if len(sys.argv) < 2:
-    print("Usage: python filter_tables.py database.sql")
+    print("Usage: python filter_tables.py \"database.sql\"")
     sys.exit(1)
 
 script = script_dir / sys.argv[1]
@@ -35,16 +36,6 @@ for line in lines:
             current_table = None
             current_block = []
 
-# Show list of tables
-print("Tables found in the script:")
-for table in table_blocks.keys():
-    print(f" - {table}")
-
-# Show list of tables
-print("Tables found in the script:")
-for table in table_blocks.keys():
-    print(f" - {table}")
-
 # Ask user for tables to include
 selected_tables = input("Enter tables to modify, separated by commas: ").split(",")
 selected_tables = [t.strip() for t in selected_tables]
@@ -55,12 +46,17 @@ new_script += "declare @xmls nvarchar(max)\n\n"
 
 for table in selected_tables:
     if table in table_blocks:
+        print(f"[INFO] Including table '{table}' in the new script.")
         new_script += table_blocks[table] + "\n"
+    else:
+        print(f"[WARNING] Table '{table}' not found in the script.")
 
 new_script += "set nocount off\n"
 
-# Save new script
+# Save new script and open it in Notepad
 with open("output.sql", "w") as f:
     f.write(new_script)
+    subprocess.Popen(['notepad.exe', 'output.sql'])
 
 print("New SQL script saved as output.sql")
+
