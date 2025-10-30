@@ -1,2 +1,21 @@
+# Environment variables
 .env
- *.sql
+.env.local
+.env.production
+
+# SQL files
+*.sql
+*.mdf
+*.ldf
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

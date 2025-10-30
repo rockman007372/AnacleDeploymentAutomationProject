@@ -24,7 +24,7 @@ for line in lines:
     
     # Detect the start of a table block
     if line_strip.startswith("print ('Syncing"):
-        current_table = line_strip.split()[2]  # Extract table name
+        current_table = line_strip.split()[2]  # Extract table name: [print, ('Syncing, [TableName],...]
         current_block = [line]
     
     # Accumulate lines in the current block
