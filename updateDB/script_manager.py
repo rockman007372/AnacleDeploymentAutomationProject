@@ -1,0 +1,181 @@
+import requests
+import pyodbc
+from pathlib import Path
+from typing import Optional
+from datetime import datetime
+from bs4 import BeautifulSoup
+
+class ScriptDownloader:
+    def __init__(self, base_url, download_dir='.'):
+        self.base_url = base_url
+        self.session = requests.Session()
+        self.download_dir = Path(download_dir)
+
+    def _get_hidden_fields(self):
+        response = self.session.get(self.base_url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        return {
+            '__VIEWSTATE': soup.find('input', {'name': '__VIEWSTATE'})['value'],
+            '__VIEWSTATEGENERATOR': soup.find('input', {'name': '__VIEWSTATEGENERATOR'})['value'],
+        }
+
+    def download_script(self) -> Optional[Path]:
+        try:
+            hidden_fields = self._get_hidden_fields()
+            post_data = {
+                '__VIEWSTATE': hidden_fields['__VIEWSTATE'],
+                '__VIEWSTATEGENERATOR': hidden_fields['__VIEWSTATEGENERATOR'],
+                '__EVENTTARGET': 'buttonGenerateScript',
+                '__EVENTARGUMENT': '',
+            }
+            
+            response = self.session.post(self.base_url, data=post_data)
+            
+            if 'attachment' in response.headers.get('Content-Disposition', ''):
+                content_disposition = response.headers.get('Content-Disposition', '')
+                filename = 'script.sql'
+                if 'filename=' in content_disposition:
+                    filename = content_disposition.split('filename=')[1].strip('"')
+                    
+                if not self.download_dir.exists():
+                    self.download_dir.mkdir(parents=True)
+
+                filename = self.download_dir / filename  
+                with open(filename, 'wb') as f:
+                    f.write(response.content)
+                    
+                print(f"  [INFO] Script downloaded successfully: {filename}")
+                return filename
+            else:
+                print("  [ERROR] No attachment found in response")
+                return None
+            
+        except Exception as e:
+            print(f"  [ERROR] An error occurred: {e}")
+            return None
+        
+class ScriptParser:
+    def __init__(self, script_path: Path):
+        self.script_path = script_path
+
+    def parse_script(self, selected_tables: list[str]) -> Optional[Path]:
+        table_blocks = self.generate_table_blocks()
+        filtered_script = self.generate_filtered_script(table_blocks, selected_tables)
+        return filtered_script
+
+    def generate_table_blocks(self)-> dict[str, str]:
+        '''
+        Parse the SQL script and return a dictionary of 
+        table names mapping to its corresponding SQL blocks.
+        '''
+        with open(self.script_path, 'r') as f:
+            lines = f.readlines()
+
+        table_blocks = {}
+        current_table = None
+        current_block = []
+
+        for line in lines:
+            line_strip = line.strip()
+            
+            # Detect the start of a table block
+            if line_strip.startswith("print ('Syncing"):
+                current_table = line_strip.split()[2]  # Extract table name: [print, ('Syncing, [TableName],...]
+                current_block = [line]
+            
+            # Accumulate lines in the current block
+            elif current_table:
+                current_block.append(line)
+                # Detect the end of the table block
+                if line_strip.startswith("print ('") and "synchronized" in line_strip:
+                    table_blocks[current_table] = "".join(current_block)
+                    current_table = None
+                    current_block = []
+        
+        return table_blocks
+
+    def generate_filtered_script(self, table_blocks, selected_tables: list[str]) -> Optional[Path]:
+        '''
+        Generate a new SQL script containing only the selected tables.
+        '''
+        try:
+            new_script = "set nocount on\n"
+            new_script += "declare @xmls nvarchar(max)\n\n"
+
+            for table in selected_tables:
+                if table in table_blocks:
+                    print(f"  [INFO] Including table '{table}' in the new script.")
+                    new_script += table_blocks[table] + "\n"
+                else:
+                    print(f"  [ERROR] Table '{table}' not found in the script.")
+                    return None
+
+            new_script += "set nocount off\n"
+
+            # Write the new script to a file in the same directory
+            filtered_script_path = self.script_path.parent / "filtered_script.sql"
+            with open(filtered_script_path, 'w') as f:
+                f.write(new_script)
+
+            return filtered_script_path
+        
+        except Exception as e:
+            print(f"  [ERROR] An error occurred while generating filtered script: {e}")
+            return None
+        
+class ScriptExecutor:
+    def __init__(self, script_path: Path, connection_string: str):
+        self.script_path = script_path
+        self.connection_string = connection_string
+
+    def execute_with_logging(self, log_path: Path):
+        try:
+            sql_script = self.script_path.read_text()
+
+            # Ensure the log directory exists
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            with pyodbc.connect(self.connection_string, autocommit=False) as conn:
+                with conn.cursor() as cursor:          
+                    with open(log_path, 'w') as log_file:
+                        # Header
+                        log_file.write("=" * 80 + "\n")
+                        log_file.write("SQL SCRIPT\n")
+                        log_file.write("=" * 80 + "\n\n")
+                        
+                        # SQL Script content
+                        log_file.write(sql_script)
+                        
+                        # Separator between script and execution
+                        log_file.write("\n\n" + "=" * 80 + "\n")
+                        log_file.write("EXECUTION LOG\n")
+                        log_file.write("=" * 80 + "\n")
+                        log_file.write(f"Started:  {datetime.now()}\n")
+                        log_file.write("-" * 80 + "\n\n")
+
+                        cursor.execute(sql_script)
+
+                        # Capture PRINT statements from SQL Server messages
+                        if cursor.messages:
+                            for message in cursor.messages:
+                                msg_text = message[1]
+                                log_file.write(f"{msg_text}\n")
+                                print(msg_text)
+                        
+                        # Process any additional result sets
+                        while cursor.nextset():
+                            if cursor.messages:
+                                for message in cursor.messages:
+                                    msg_text = message[1]
+                                    log_file.write(f"{msg_text}\n")
+                                    print(msg_text)
+                        
+                        # Commit the transaction
+                        conn.commit()
+                        
+                        # Footer
+                        log_file.write("\n" + "-" * 80 + "\n")
+                        log_file.write(f"Completed: {datetime.now()}\n")
+                        log_file.write("=" * 80 + "\n")
+        except Exception as e:
+            print(f"[ERROR] An error occurred during SQL execution: {e}")

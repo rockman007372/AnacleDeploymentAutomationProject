@@ -1,0 +1,9 @@
+{
+    "log_dir": "./logs/",
+    "url": "http://localhost/SP/applogin.aspx",
+    "update_all_tables": false,
+    "tables": [
+        "GiroDeduction",
+        "GiroAdhocDeduction"
+    ]
+}
