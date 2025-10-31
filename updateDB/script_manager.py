@@ -132,10 +132,10 @@ class ScriptExecutor:
 
     def execute(self, script_path: Path, log_dir: Path):
         try:
-            if not self.script_path.exists():
-                logger.error(f"Script file not found: {self.script_path}")
+            if not script_path.exists():
+                logger.error(f"Script file not found: {script_path}")
                 return
-            sql_script = self.script_path.read_text()
+            sql_script = script_path.read_text()
             log_dir.mkdir(parents=True, exist_ok=True)        
 
             with pyodbc.connect(self.connection_string, autocommit=False) as conn:

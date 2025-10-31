@@ -91,8 +91,8 @@ def main():
     logger.info("[STEP 3/3] Executing SQL script...")
     logger.info(f"Script to be executed: {script_path}")
     connection_string = os.getenv("DB_CONNECTION_STRING")
-    executor = ScriptExecutor(script_path, connection_string=connection_string)
-    executor.execute()
+    executor = ScriptExecutor(connection_string=connection_string)
+    executor.execute(script_path, log_dir)
 
 if __name__ == "__main__":
     main()
