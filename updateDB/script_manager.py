@@ -9,17 +9,17 @@ from bs4 import BeautifulSoup
 logger = logging.getLogger(__name__)
 
 class ScriptDownloader:
-    def __init__(self, base_url, download_dir='.'):
+    def __init__(self, base_url: str, download_dir: Path):
         self.base_url = base_url
-        self.download_dir = Path(download_dir)
+        self.download_dir = download_dir
         self.session = requests.Session()
 
     def _get_hidden_fields(self):
         response = self.session.get(self.base_url, timeout=30)
         soup = BeautifulSoup(response.content, 'html.parser')
         return {
-            '__VIEWSTATE': soup.find('input', {'name': '__VIEWSTATE'})['value'],
-            '__VIEWSTATEGENERATOR': soup.find('input', {'name': '__VIEWSTATEGENERATOR'})['value'],
+            '__VIEWSTATE': soup.find('input', {'name': '__VIEWSTATE'})['value'], # type: ignore
+            '__VIEWSTATEGENERATOR': soup.find('input', {'name': '__VIEWSTATEGENERATOR'})['value'], # type: ignore
         }
 
     def download_script(self) -> Optional[Path]:
@@ -149,15 +149,15 @@ class ScriptExecutor:
                         if cursor.messages:
                             for message in cursor.messages:
                                 msg_text = message[1]
-                                log_file.write(msg_text)
+                                log_file.write(f"{msg_text}\n")
                         
                         # Process any additional result sets
                         while cursor.nextset():
                             if cursor.messages:
                                 for message in cursor.messages:
                                     msg_text = message[1]
-                                    log_file.write(msg_text)
-                    
+                                    log_file.write(f"{msg_text}\n")
+
                     # Commit the transaction
                     conn.commit()
                     logger.info(f"SQL script executed successfully. Check {execution_log} for details.")
