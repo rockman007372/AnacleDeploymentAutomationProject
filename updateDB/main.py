@@ -32,11 +32,11 @@ def main():
 
     print("\n[STEP 2/3]: Parsing SQL script...")
     update_all_tables = config.get("update_all_tables", False)
-    if update_all_tables == '.':
+    if update_all_tables:
         print("  Updating all tables.")
     else:    
         selected_tables = config.get("tables", [])
-        print(f"  Selected tables to update: {selected_tables}")
+        print(f"  Updating selected tables: {selected_tables}")
         parser = ScriptParser(script_path)
         script_path = parser.parse_script(selected_tables)
         if not script_path:
