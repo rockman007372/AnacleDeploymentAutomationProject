@@ -56,40 +56,40 @@ def main():
 
     logger.info("[STEP 1/3] Downloading SQL script...")
     url = config.get("url")
-    logger.info(f"  Download URL: {url}")
+    logger.info(f"Download URL: {url}")
 
     downloader = ScriptDownloader(base_url=url, download_dir=log_dir)
     script_path = downloader.download_script()
     if not script_path:
-        logger.error("  Failed to download the script. Exiting.")
+        logger.error("Failed to download the script. Exiting.")
         sys.exit(1)
 
     logger.info("[STEP 2/3] Parsing SQL script...")
     update_all_tables = config.get("update_all_tables", False)
 
     if update_all_tables:
-        logger.info("  Updating all tables.")
+        logger.info("Updating all tables.")
     else:
         selected_tables = config.get("tables", [])
-        logger.info(f"  Updating selected tables: {selected_tables}")
+        logger.info(f"Updating selected tables: {selected_tables}")
         parser = ScriptParser(script_path)
         script_path = parser.parse_script(selected_tables)
         if not script_path:
-            logger.error("  Failed to parse the script. Exiting.")
+            logger.error("Failed to parse the script. Exiting.")
             sys.exit(1)
 
     # Optional validation
     validate_script = config.get("validate_script_before_execution", True)
     if validate_script:
-        logger.info("  Opening script in Notepad for review...")
+        logger.info("Opening script in Notepad for review...")
         subprocess.Popen(["notepad.exe", script_path])
-        response = input("  Proceed with executing the script (Y/N): ")
+        response = input("Proceed with executing the script (Y/N): ")
         if response.strip().upper() != "Y":
-            logger.info("  Operation aborted by user.")
+            logger.info("Operation aborted by user.")
             sys.exit(0)
 
     logger.info("[STEP 3/3] Executing SQL script...")
-    logger.info(f"  Script to be executed: {script_path}")
+    logger.info(f"Script to be executed: {script_path}")
     connection_string = os.getenv("DB_CONNECTION_STRING")
     executor = ScriptExecutor(script_path, connection_string=connection_string)
     executor.execute()

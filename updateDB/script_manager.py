@@ -15,7 +15,7 @@ class ScriptDownloader:
         self.session = requests.Session()
 
     def _get_hidden_fields(self):
-        response = self.session.get(self.base_url)
+        response = self.session.get(self.base_url, timeout=30)
         soup = BeautifulSoup(response.content, 'html.parser')
         return {
             '__VIEWSTATE': soup.find('input', {'name': '__VIEWSTATE'})['value'],
@@ -47,14 +47,14 @@ class ScriptDownloader:
                 with open(filename, 'wb') as f:
                     f.write(response.content)
                     
-                logger.info(f"  Script downloaded successfully: {filename}")
+                logger.info(f"Script downloaded successfully: {filename}")
                 return filename
             else:
-                logger.error("  No attachment found in response")
+                logger.error("No attachment found in response")
                 return None
             
         except Exception as e:
-            print(f"  An error occurred: {e}")
+            print(f"An error occurred: {e}")
             return None
         
 class ScriptParser:
@@ -107,10 +107,10 @@ class ScriptParser:
 
             for table in selected_tables:
                 if table in table_blocks:
-                    logger.info(f"  Including table '{table}' in the new script.")
+                    logger.info(f"Including table '{table}' in the new script.")
                     new_script += table_blocks[table] + "\n"
                 else:
-                    logger.error(f"  Table '{table}' not found in the script.")
+                    logger.error(f"Table '{table}' not found in the script.")
                     return None
 
             new_script += "set nocount off\n"
@@ -123,42 +123,44 @@ class ScriptParser:
             return filtered_script_path
         
         except Exception as e:
-            logger.error(f"  An error occurred while generating filtered script: {e}")
+            logger.error(f"An error occurred while generating filtered script: {e}")
             return None
         
 class ScriptExecutor:
-    def __init__(self, script_path: Path, connection_string: str):
-        self.script_path = script_path
+    def __init__(self, connection_string: str):
         self.connection_string = connection_string
 
-    def execute(self):
+    def execute(self, script_path: Path, log_dir: Path):
         try:
             if not self.script_path.exists():
-                logger.error(f"  Script file not found: {self.script_path}")
+                logger.error(f"Script file not found: {self.script_path}")
                 return
-            
             sql_script = self.script_path.read_text()
-            
+            log_dir.mkdir(parents=True, exist_ok=True)        
+
             with pyodbc.connect(self.connection_string, autocommit=False) as conn:
-                with conn.cursor() as cursor:          
+                with conn.cursor() as cursor:     
+                    logger.info("Executing script...")     
                     cursor.execute(sql_script)
 
                     # Capture PRINT statements from SQL Server messages
-                    if cursor.messages:
-                        for message in cursor.messages:
-                            msg_text = message[1]
-                            logger.info(f"  {msg_text}")
-                    
-                    # Process any additional result sets
-                    while cursor.nextset():
+                    execution_log = log_dir / "execution_log.txt"
+                    with open(execution_log, "w") as log_file:
                         if cursor.messages:
                             for message in cursor.messages:
                                 msg_text = message[1]
-                                logger.info(f"  {msg_text}")
+                                log_file.write(msg_text)
+                        
+                        # Process any additional result sets
+                        while cursor.nextset():
+                            if cursor.messages:
+                                for message in cursor.messages:
+                                    msg_text = message[1]
+                                    log_file.write(msg_text)
                     
                     # Commit the transaction
                     conn.commit()
-                    logger.info("  SQL script executed successfully.")
+                    logger.info(f"SQL script executed successfully. Check {execution_log} for details.")
                         
         except Exception as e:
-            logger.error(f"  An error occurred during SQL execution: {e}")
+            logger.error(f"An error occurred during SQL execution: {e}")
