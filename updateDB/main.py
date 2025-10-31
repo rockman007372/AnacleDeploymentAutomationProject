@@ -24,6 +24,7 @@ def main():
     
     print("[STEP 1/3]: Downloading SQL script...")
     url = config.get("url")
+    print(f"  Download URL: {url}")
     downloader = ScriptDownloader(base_url=url, download_dir=log_dir)
     script_path = downloader.download_script()
     if not script_path: 
@@ -44,13 +45,17 @@ def main():
             sys.exit(1)
 
     # Open the script in Notepad for review
-    subprocess.Popen(['notepad.exe', script_path])
-    response = input("  Proceed with executing the script (Y/N): ")
-    if response.strip().upper() != 'Y':
-        print("  Operation aborted by user.")
-        sys.exit(0)
+    validate_script = config.get("validate_script_before_execution", True)
+    if validate_script:
+        print("  Opening script in Notepad for review...")
+        subprocess.Popen(['notepad.exe', script_path])
+        response = input("  Proceed with executing the script (Y/N): ")
+        if response.strip().upper() != 'Y':
+            print("  Operation aborted by user.")
+            sys.exit(0)
     
     print("\n[STEP 3/3]: Executing SQL script...")
+    print(f"  Script to be executed: {script_path}")
     connection_string = os.getenv("DB_CONNECTION_STRING")
     executor = ScriptExecutor(script_path, connection_string=connection_string)
     executor.execute_with_logging(log_dir / f"sql_execution_log_{timestamp}.txt")

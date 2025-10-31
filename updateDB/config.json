@@ -5,5 +5,6 @@
     "tables": [
         "GiroDeduction",
         "GiroAdhocDeduction"
-    ]
+    ],
+    "validate_script_before_execution": true
 }
