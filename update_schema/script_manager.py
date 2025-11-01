@@ -15,7 +15,7 @@ class ScriptDownloader:
         self.session = requests.Session()
 
     def _get_hidden_fields(self):
-        response = self.session.get(self.base_url, timeout=30)
+        response = self.session.get(self.base_url, timeout=60)
         soup = BeautifulSoup(response.content, 'html.parser')
         return {
             '__VIEWSTATE': soup.find('input', {'name': '__VIEWSTATE'})['value'], # type: ignore
