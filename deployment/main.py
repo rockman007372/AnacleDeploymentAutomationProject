@@ -205,9 +205,6 @@ def main():
             except Exception:
                 logger.exception(f"{step} failed.")
                 sys.exit(1)
-
-    deploy_sql(config, log_dir, logger)
-    publish_artifacts(config, logger)
     
     logger.info(f"Deployment process completed.")
 
