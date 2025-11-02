@@ -131,7 +131,7 @@ def main():
     # Publish the built artifacts concurrently
     solution_dir: Path = Path(config["build_config"]["solution_dir"])
     dest_dir: Path = Path(config["destination_dir"]) / f"UAT_{datetime.now().strftime("%Y%m%d")}"
-    zip_output: bool = config.get("destination_dir", True)
+    zip_output: bool = config.get("zip_output", True)
     seven_zip_path: Path = Path(config.get("7zip_path", "C:/Program Files/7-Zip/7z.exe"))
     remove_config_files = config.get("remove_config_files", True)
 
