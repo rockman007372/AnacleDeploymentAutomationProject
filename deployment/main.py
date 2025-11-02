@@ -65,14 +65,15 @@ def copy_folder(src: Path, dst: Path, logger: logging.Logger):
 def move_file(src: Path, dst: Path, logger: logging.Logger):
     if src.exists():
         try:
-            dst.mkdir(parents=True, exist_ok=True) # must ensure dest dir exists
-            shutil.move(src, dst)
+            dst.parent.mkdir(parents=True, exist_ok=True) # must ensure dest dir exists
+            shutil.copy(src, dst)
+            os.remove(src)
             logger.debug(f"Moved {src} to {dst}.")
         except Exception as e:
             logger.error(f"Error occured while moving {src} to {dst}: {e}")
             raise
     else:
-        logger.info(f"Skip {src} because the file cannot be found.")
+        logger.warning(f"Skip {src} because the file cannot be found.")
 
 
 def zip_with_7zip(folders, zip_path, sevenzip_path, logger: logging.Logger):
@@ -188,7 +189,7 @@ def main():
     logger.info(f"Deployment process started.")
 
     # Pipeline   
-    build_solution(config, logger)
+    # build_solution(config, logger)
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = {
