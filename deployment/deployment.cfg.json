@@ -7,10 +7,7 @@
     "update_schema_config": {
         "url": "http://localhost/SP/applogin.aspx",
         "update_all_tables": false,
-        "tables": [
-            "GiroDeduction",
-            "GiroAdhocDeduction"
-        ],
-        "validate_script_before_execution": true 
+        "tables": [],
+        "validate_script_before_execution": false 
     }
 }
