@@ -13,9 +13,11 @@ sys.path.append('../')
 from build.build_manager import Builder
 from update_schema.script_manager import SQLDeploymentPipeline
 
+
 def load_config(path: str) -> dict:
     with open(path, 'r') as f:
         return json.load(f)
+
 
 def init_logger(log_dir: Path) -> logging.Logger:
     log_file = log_dir / f'deployment.log'
@@ -39,11 +41,13 @@ def init_logger(log_dir: Path) -> logging.Logger:
     logger.addHandler(file_handler)
     return logger
 
+
 def init_log_dir(base_dir: Path) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_dir = base_dir / f'deployment_{timestamp}'
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir 
+
 
 def copy_folder(src: Path, dst: Path, logger: logging.Logger):
     try:
@@ -69,6 +73,7 @@ def move_file(src: Path, dst: Path, logger: logging.Logger):
     else:
         logger.info(f"Skip {src} because the file cannot be found.")
 
+
 def zip_with_7zip(folders, zip_path, sevenzip_path, logger: logging.Logger):
     """Attempt to compress using external 7z.exe."""
     try:
@@ -90,6 +95,7 @@ def zip_with_7zip(folders, zip_path, sevenzip_path, logger: logging.Logger):
         logger.warning("7-Zip not found, falling back to Python zipfile")
         zip_with_python(folders, zip_path, logger)
 
+
 def zip_with_python(folders, zip_path, logger: logging.Logger):
     """Fallback ZIP implementation using Python's zipfile."""
     try:
@@ -106,29 +112,28 @@ def zip_with_python(folders, zip_path, logger: logging.Logger):
         logger.error(f" Failed to create deployment package: {e}")
         sys.exit(1)
 
-def main():
-    config = load_config('deployment.cfg.json')
-    
-    # Initialize logging directory and logger
-    root_log_dir = Path(config.get('log_dir', './logs/'))
-    log_dir = init_log_dir(root_log_dir)
-    logger = init_logger(log_dir)
 
-    logger.info(f"Deployment process started.")
-
-    # Build the solution 
+def build_solution(config, logger):
     logger.info("Starting build process...")
-    build_config = config.get('build_config', {})
-    builder = Builder(build_config, custom_logger=logger)
+    
+    builder = Builder(config.get('build_config', {}), custom_logger=logger)
     builder.build()
 
-    # After building, run the SQL deployment pipeline
+
+def deploy_sql(config, log_dir, logger):
     logger.info("Starting SQL deployment process...")
-    update_schema_config = config.get('update_schema_config', {})
-    sql_pipeline = SQLDeploymentPipeline(update_schema_config, log_directory=log_dir, custom_logger=logger)
+
+    sql_pipeline = SQLDeploymentPipeline(
+        config.get('update_schema_config', {}),
+        log_directory=log_dir,
+        custom_logger=logger
+    )
     sql_pipeline.run()
 
-    # Publish the built artifacts concurrently
+
+def publish_artifacts(config, logger):
+    logger.info("Publishing artifacts...")
+
     solution_dir: Path = Path(config["build_config"]["solution_dir"])
     dest_dir: Path = Path(config["destination_dir"]) / f"UAT_{datetime.now().strftime("%Y%m%d")}"
     zip_output: bool = config.get("zip_output", True)
@@ -169,6 +174,22 @@ def main():
             zip_with_7zip(folders_to_zip, zip_file, seven_zip_path, logger)
         else:
             zip_with_python(folders_to_zip, zip_file, logger)
+
+
+def main():
+    config = load_config('deployment.cfg.json')
+    
+    # Initialize logging directory and logger
+    root_log_dir = Path(config.get('log_dir', './logs/'))
+    log_dir = init_log_dir(root_log_dir)
+    logger = init_logger(log_dir)
+
+    logger.info(f"Deployment process started.")
+
+    # Pipeline   
+    build_solution(config, logger)
+    deploy_sql(config, log_dir, logger)
+    publish_artifacts(config, logger)
     
     logger.info(f"Deployment process completed.")
 
