@@ -55,23 +55,21 @@ class Builder:
                 raise FileNotFoundError(f"Development command prompt not found: {dev_cmd_path}")
 
             dev_cmd = f'"{dev_cmd_path}"'
-
-            logic_layer = solution_dir / "LogicLayer" / "LogicLayer.csproj"
-            service = solution_dir / "Service" / "Service.csproj"
+            abell_sol = solution_dir / "abell.sln"
             interface = solution_dir / "AnacleAPI.Interface" / "AnacleAPI.Interface.csproj"
 
             self.run_command(
-                f'{dev_cmd} && msbuild "{logic_layer}" /t:Rebuild /p:Platform=AnyCPU /p:Configuration=Debug /v:diag',
+                f'{dev_cmd} && msbuild {abell_sol} /t:LogicLayer:Rebuild /v:diag',
                 "Building LogicLayer",
             )
-            # self.run_command(
-            #     f'{dev_cmd} && msbuild "{service}" /t:Rebuild /p:Platform=AnyCPU /p:Configuration=Debug',
-            #     "Building Service",
-            # )
-            # self.run_command(
-            #     f'{dev_cmd} && msbuild "{interface}" /p:DeployOnBuild=true /p:PublishProfile=DevOpsDebug /p:Configuration=Debug /v:m',
-            #     "Publishing AnacleAPI.Interface",
-            # )
+            self.run_command(
+                f'{dev_cmd} && msbuild {abell_sol} /t:Service:Rebuild /v:diag',
+                "Building Service",
+            )
+            self.run_command(
+                f'{dev_cmd} && msbuild "{interface}" /p:DeployOnBuild=true /p:PublishProfile=DevOpsDebug /p:Configuration=Debug /v:m',
+                "Publishing AnacleAPI.Interface",
+            )
 
             self.logger.info("✅ All build tasks completed successfully.")
             return True
