@@ -45,7 +45,7 @@ class Builder:
             raise RuntimeError(f"{step_name} failed: {result.stderr}")
         self.logger.info(f"{step_name} completed successfully.")
 
-    def build(self) -> bool:
+    def build(self):
         try:
             solution_dir = Path(self.config["solution_dir"])
             dev_cmd_path = Path(self.config["dev_cmd_path"])
@@ -72,8 +72,7 @@ class Builder:
             )
 
             self.logger.info("✅ All build tasks completed successfully.")
-            return True
 
         except Exception as e:
             self.logger.error(f"❌ Build process failed: {e}")
-            return False
+            exit(1)

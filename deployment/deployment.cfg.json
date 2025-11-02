@@ -9,5 +9,9 @@
         "update_all_tables": false,
         "tables": [],
         "validate_script_before_execution": false 
-    }
+    },
+    "destination_dir": "D:/deployment/SP",
+    "remove_config_files": true,
+    "zip_ouput": true,
+    "7zip_path": "C:/Program Files/7-Zip/7z.exe"
 }
