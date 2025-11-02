@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import shutil
 import sys
@@ -114,14 +115,14 @@ def zip_with_python(folders, zip_path, logger: logging.Logger):
 
 
 def build_solution(config, logger):
-    logger.info("Starting build process...")
+    logger.info("Starting Build...")
     
     builder = Builder(config.get('build_config', {}), custom_logger=logger)
     builder.build()
 
 
 def deploy_sql(config, log_dir, logger):
-    logger.info("Starting SQL deployment process...")
+    logger.info("Starting SQL Deployment...")
 
     sql_pipeline = SQLDeploymentPipeline(
         config.get('update_schema_config', {}),
@@ -163,7 +164,7 @@ def publish_artifacts(config, logger):
         for folder in folders_to_copy:
             for cfg_file in config_files.get(folder, []):
                 source = dest_dir / folder / cfg_file
-                dest = config_dir / folder
+                dest = config_dir / folder / cfg_file
                 move_file(source, dest, logger)
     
     if zip_output:
@@ -188,6 +189,22 @@ def main():
 
     # Pipeline   
     build_solution(config, logger)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = {
+            executor.submit(deploy_sql, config, log_dir, logger): "SQL Deployment",
+            executor.submit(publish_artifacts, config, logger): "Artifact Publish"
+        }
+
+        for future in as_completed(futures):
+            step = futures[future]
+            try:
+                future.result()
+                logger.info(f"{step} completed successfully.")
+            except Exception:
+                logger.exception(f"{step} failed.")
+                sys.exit(1)
+
     deploy_sql(config, log_dir, logger)
     publish_artifacts(config, logger)
     
