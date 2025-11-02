@@ -1,6 +1,17 @@
 {
-    "log_dir": "./logs",
-    "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell",
-    "destination_dir": "",
-    "dev_cmd_path": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat"
+    "build_config": {
+        "log_dir": "./logs",
+        "dev_cmd_path": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat",
+        "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell"
+    },
+    "update_schema_config": {
+        "log_dir": "./logs/",
+        "url": "http://localhost/SP/applogin.aspx",
+        "update_all_tables": false,
+        "tables": [
+            "GiroDeduction",
+            "GiroAdhocDeduction"
+        ],
+        "validate_script_before_execution": false
+    }
 }
