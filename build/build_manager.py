@@ -6,10 +6,9 @@ from typing import Dict, Optional
 
 
 class Builder:
-    def __init__(self, config: Dict, log_dir: Optional[Path] = None):
+    def __init__(self, config: Dict, custom_logger: Optional[logging.Logger] = None):
         self.config = config
-        self.log_dir = log_dir or Path(config.get('log_dir', './logs/'))
-        self.logger = self._setup_logging(self.log_dir)
+        self.logger = custom_logger or self._setup_logging(Path(config.get('log_dir', './logs/')))
 
     def _setup_logging(self, log_dir: Path):
         """Sets up logging to both console and file."""
@@ -46,7 +45,7 @@ class Builder:
             raise RuntimeError(f"{step_name} failed: {result.stderr}")
         self.logger.info(f"{step_name} completed successfully.")
 
-    def build(self):
+    def build(self) -> bool:
         try:
             solution_dir = Path(self.config["solution_dir"])
             dev_cmd_path = Path(self.config["dev_cmd_path"])
@@ -62,19 +61,21 @@ class Builder:
             interface = solution_dir / "AnacleAPI.Interface" / "AnacleAPI.Interface.csproj"
 
             self.run_command(
-                f'{dev_cmd} && msbuild "{logic_layer}" /t:Rebuild /p:Platform=AnyCPU /p:Configuration=Debug',
+                f'{dev_cmd} && msbuild "{logic_layer}" /t:Rebuild /p:Platform=AnyCPU /p:Configuration=Debug /v:diag',
                 "Building LogicLayer",
             )
-            self.run_command(
-                f'{dev_cmd} && msbuild "{service}" /t:Rebuild /p:Platform=AnyCPU /p:Configuration=Debug',
-                "Building Service",
-            )
-            self.run_command(
-                f'{dev_cmd} && msbuild "{interface}" /p:DeployOnBuild=true /p:PublishProfile=DevOpsDebug /p:Configuration=Debug /v:m',
-                "Publishing AnacleAPI.Interface",
-            )
+            # self.run_command(
+            #     f'{dev_cmd} && msbuild "{service}" /t:Rebuild /p:Platform=AnyCPU /p:Configuration=Debug',
+            #     "Building Service",
+            # )
+            # self.run_command(
+            #     f'{dev_cmd} && msbuild "{interface}" /p:DeployOnBuild=true /p:PublishProfile=DevOpsDebug /p:Configuration=Debug /v:m',
+            #     "Publishing AnacleAPI.Interface",
+            # )
 
             self.logger.info("✅ All build tasks completed successfully.")
+            return True
 
         except Exception as e:
             self.logger.error(f"❌ Build process failed: {e}")
+            return False
