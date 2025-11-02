@@ -120,13 +120,13 @@ def main():
     logger.info("Starting build process...")
     build_config = config.get('build_config', {})
     builder = Builder(build_config, custom_logger=logger)
-    # builder.build()
+    builder.build()
 
     # After building, run the SQL deployment pipeline
     logger.info("Starting SQL deployment process...")
     update_schema_config = config.get('update_schema_config', {})
     sql_pipeline = SQLDeploymentPipeline(update_schema_config, log_directory=log_dir, custom_logger=logger)
-    # sql_pipeline.run()
+    sql_pipeline.run()
 
     # Publish the built artifacts concurrently
     solution_dir: Path = Path(config["build_config"]["solution_dir"])
