@@ -141,7 +141,7 @@ class ScriptExecutor:
 
     def write_execution_log(self, log_dir: Path, messages: list[str]):
         log_dir.mkdir(parents=True, exist_ok=True)
-        execution_log = log_dir / "execution_log.txt"
+        execution_log = log_dir / "sql_server_execution.log"
         with open(execution_log, "w") as log_file:
             log_file.write("\n".join(messages))
         self.logger.info(f"Execution log written to: {execution_log}")
@@ -150,13 +150,12 @@ class ScriptExecutor:
         try:
             if not script_path.exists():
                 raise FileNotFoundError(f"Script file not found: {script_path}")
-            self.logger.info(f"Script to be executed: {script_path}")
 
             sql_script = script_path.read_text()
 
             with pyodbc.connect(self.connection_string, autocommit=False) as conn:
                 with conn.cursor() as cursor:     
-                    self.logger.info("Executing script...")     
+                    self.logger.info(f"Executing script: {script_path}")     
                     cursor.execute(sql_script)
 
                     # Capture PRINT statements from SQL Server messages
@@ -181,8 +180,14 @@ class ScriptExecutor:
             return False
 
 class SQLDeploymentPipeline:
-    def __init__(self, config: Dict, custom_logger: Optional[logging.Logger]=None):
+    def __init__(self, config: Dict, log_directory: Optional[Path]=None, custom_logger: Optional[logging.Logger]=None):
+        '''
+        config: Configuration dictionary.
+        log_directory: Directory to store downloaded and processed scripts, and SQL server execution log.
+        custom_logger: Optional custom logger for logging. The log file may or may not be in log_directory.
+        '''
         self.config = config
+        self.log_directory = log_directory or Path(config.get("log_dir", "./logs/"))
         self.logger = custom_logger or module_logger
 
     def setup(self):
@@ -192,7 +197,7 @@ class SQLDeploymentPipeline:
     def download_script(self) -> Path:
         """Downloads the SQL script using ScriptDownloader."""
         url = self.config.get("url", "")
-        download_dir = Path(self.config.get("log_dir", "./logs/"))
+        download_dir = self.log_directory
         downloader = ScriptDownloader(url, download_dir, self.logger)
         
         script_path = downloader.download_script()
@@ -247,10 +252,6 @@ class SQLDeploymentPipeline:
         try:
             self.setup()
 
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_dir = Path(self.config.get('log_dir', './logs/')) / timestamp
-            log_dir.mkdir(parents=True, exist_ok=True)
-
             self.logger.info("[STEP 1/3] Downloading SQL script...")
             script_path = self.download_script()
 
@@ -263,10 +264,10 @@ class SQLDeploymentPipeline:
             self.logger.info("[STEP 3/3] Executing SQL script...")
             self.execute_script(script_path)
 
-            self.logger.info("Deployment pipeline completed successfully.")
+            self.logger.info("✅ Deployment pipeline completed successfully.")
 
         except Exception as e:
-            self.logger.exception(f"Pipeline failed: {e}")
+            self.logger.exception(f"❌ Pipeline failed: {e}")
             sys.exit(1)
 
         

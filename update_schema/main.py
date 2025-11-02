@@ -48,15 +48,12 @@ def main():
 
     # Ensure the log directory exists
     log_dir.mkdir(parents=True, exist_ok=True)
-
-    # Update config with the new log directory
-    config['log_dir'] = str(log_dir)
     
     # Setup logging
     logger = setup_logging(log_dir)
 
     # Run the SQL deployment pipeline
-    pipeline = SQLDeploymentPipeline(config, custom_logger=logger)
+    pipeline = SQLDeploymentPipeline(config, log_directory=log_dir, custom_logger=logger)
     pipeline.run()
 
 if __name__ == "__main__":
