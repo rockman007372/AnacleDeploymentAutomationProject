@@ -189,7 +189,7 @@ def main():
     logger.info(f"Deployment process started.")
 
     # Pipeline   
-    # build_solution(config, logger)
+    build_solution(config, logger)
 
     with ThreadPoolExecutor(max_workers=2, thread_name_prefix="Worker") as executor:
         futures = {

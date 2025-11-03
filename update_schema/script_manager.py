@@ -182,8 +182,8 @@ class ScriptExecutor:
 class SQLDeploymentPipeline:
     def __init__(self, config: Dict, log_directory: Optional[Path]=None, custom_logger: Optional[logging.Logger]=None):
         '''
-        config: Configuration dictionary.
-        log_directory: Directory to store downloaded and processed scripts, and SQL server execution log.
+        config: Configuration dictionary.\n
+        log_directory: Directory to store downloaded and processed scripts, and SQL server execution log.\n
         custom_logger: Optional custom logger for logging. The log file may or may not be in log_directory.
         '''
         self.config = config
