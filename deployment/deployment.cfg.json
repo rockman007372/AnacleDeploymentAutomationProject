@@ -12,6 +12,6 @@
     },
     "destination_dir": "D:/deployment/SP",
     "remove_config_files": true,
-    "zip_output": false,
+    "zip_output": true,
     "7zip_path": "C:/Program Files/7-Zip/7z.exe"
 }
