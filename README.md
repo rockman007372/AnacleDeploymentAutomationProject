@@ -26,7 +26,7 @@ Previously, after rebuilding the **LogicLayer** project (which defines backend m
 * **Filters** it to include only tables specified in the config file.
 * **Executes** the filtered script on SQL Server automatically.
 
-It solves both problems of manual fetching SQL script and slow script execution time.
+It solves both problems of manual fetching of SQL script and slow script execution time.
 
 ---
 
