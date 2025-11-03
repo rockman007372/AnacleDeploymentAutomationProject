@@ -8,10 +8,10 @@
         "url": "http://localhost/SP/applogin.aspx",
         "update_all_tables": false,
         "tables": [],
-        "validate_script_before_execution": false 
+        "validate_script_before_execution": true 
     },
     "destination_dir": "D:/deployment/SP",
     "remove_config_files": true,
-    "zip_ouput": true,
+    "zip_output": false,
     "7zip_path": "C:/Program Files/7-Zip/7z.exe"
 }

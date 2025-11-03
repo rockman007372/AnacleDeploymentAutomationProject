@@ -74,5 +74,5 @@ class Builder:
             self.logger.info("✅ All build tasks completed successfully.")
 
         except Exception as e:
-            self.logger.error(f"❌ Build process failed: {e}")
+            self.logger.exception(f"❌ Build process failed.")
             exit(1)

@@ -40,6 +40,8 @@ def init_logger(log_dir: Path) -> logging.Logger:
 
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
+
+    logger.propagate = False # Prevent log messages being propagated to root logger when a new process is spawned
     return logger
 
 

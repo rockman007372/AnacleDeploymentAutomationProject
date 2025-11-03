@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import socket
 import subprocess
 import sys
 from dotenv import load_dotenv
@@ -229,12 +230,28 @@ class SQLDeploymentPipeline:
         validate_script = self.config.get("validate_script_before_execution", True)
 
         if validate_script:
-            self.logger.info("Opening script in Notepad for review...")
-            subprocess.Popen(["notepad.exe", script_path])
-            response = input("Proceed with executing the script (Y/N): ")
+            host, port = "127.0.0.1", 50505
+
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server.bind((host, port))
+            server.listen(1)
+
+            logging.info("Waiting for user response after script validation...")
+            subprocess.Popen(
+                ["python", "../validation_console.py", str(port), str(script_path)],
+                creationflags=subprocess.CREATE_NEW_CONSOLE
+            )
+
+            conn, _ = server.accept()
+            response = conn.recv(1024).decode()
+            conn.close()
+            server.close()
+
             if response.strip().upper() != "Y":
-                self.logger.info("Operation aborted by user.")
+                self.logger.warning("Operation aborted by user.")
                 return False
+
+            self.logger.info("Script acknowledged by user. Proceed with execution.")                
             
         return True
 
@@ -267,7 +284,7 @@ class SQLDeploymentPipeline:
             self.logger.info("✅ SQL Deployment completed successfully.")
 
         except Exception as e:
-            self.logger.exception(f"❌ SQL Deployment failed: {e}")
+            self.logger.exception(f"❌ SQL Deployment failed.")
             sys.exit(1)
 
         
