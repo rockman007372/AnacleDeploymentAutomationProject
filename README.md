@@ -57,9 +57,17 @@ Example `config.json`:
 | **tables**                           | List of table names to include when filtering the SQL script. Ignored if `update_all_tables` is `true`. |
 | **validate_script_before_execution** | If `true`, spawns a new console to preview the script and ask for permission to proceed execution.      |
 
-### How to run
+### Setup and Run
 
-Update the `config.json` file in `update_schema` directory, then run from the project root (where this README is located):
+1. Create a `.env` file in `update_schema` directory and add your database connection string.
+
+```
+DB_CONNECTION_STRING=Driver={SQL Server};server=denis4\SQL2022DEVE; database=abell.v10.0-MyBill-Deve; uid=username; pwd=pasword;
+```
+
+2. Update the `config.json` file in `update_schema` directory.
+
+3. Run from the project root (where this README is located):
 
 ```cmd
 python update_schema/main.py
