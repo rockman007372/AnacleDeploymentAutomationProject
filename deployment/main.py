@@ -33,7 +33,7 @@ def init_logger(log_dir: Path) -> logging.Logger:
     file_handler.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        "%(asctime)s [%(levelname)s] [%(threadName)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
@@ -157,7 +157,7 @@ def publish_artifacts(config, logger):
         logger.info("Removing config files...")
         config_dir = dest_dir / "configs"
         config_files = {
-            "webapp": ["web.config", "web.config.bak", "website.publishproj"],
+            "webapp": ["web.config", "website.publishproj"],
             "service": ["Service.exe.config", "LogicLayer.dll.config"],
             "TPAPI": ["Web.config"],
         }
@@ -191,7 +191,7 @@ def main():
     # Pipeline   
     # build_solution(config, logger)
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=2, thread_name_prefix="Worker") as executor:
         futures = {
             executor.submit(deploy_sql, config, log_dir, logger): "SQL Deployment",
             executor.submit(publish_artifacts, config, logger): "Artifact Publish"
