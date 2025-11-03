@@ -252,22 +252,22 @@ class SQLDeploymentPipeline:
         try:
             self.setup()
 
-            self.logger.info("[STEP 1/3] Downloading SQL script...")
+            self.logger.info("Downloading SQL script...")
             script_path = self.download_script()
 
-            self.logger.info("[STEP 2/3] Parsing SQL script...")
+            self.logger.info("Parsing SQL script...")
             script_path = self.parse_script(script_path)
 
             if not self.validate_script(script_path):
                 sys.exit(0)
 
-            self.logger.info("[STEP 3/3] Executing SQL script...")
+            self.logger.info("Executing SQL script...")
             self.execute_script(script_path)
 
-            self.logger.info("✅ Deployment pipeline completed successfully.")
+            self.logger.info("✅ SQL Deployment completed successfully.")
 
         except Exception as e:
-            self.logger.exception(f"❌ Pipeline failed: {e}")
+            self.logger.exception(f"❌ SQL Deployment failed: {e}")
             sys.exit(1)
 
         
