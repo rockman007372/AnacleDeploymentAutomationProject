@@ -11,7 +11,7 @@ import zipfile
 
 sys.path.append('../')
 
-from build.build_manager import Builder
+from build.build import Builder
 from update_schema.script_manager import SQLDeploymentPipeline
 
 
