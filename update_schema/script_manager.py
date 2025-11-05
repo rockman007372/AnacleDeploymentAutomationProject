@@ -8,7 +8,7 @@ import requests
 import pyodbc
 import logging
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from bs4 import BeautifulSoup
 
 # Module-level fallback logger
@@ -147,7 +147,7 @@ class ScriptExecutor:
             log_file.write("\n".join(messages))
         self.logger.info(f"Execution log written to: {execution_log}")
 
-    def execute(self, script_path: Path) -> bool:
+    def execute(self, script_path: Path, databases: Optional[List[str]]=None) -> bool:
         try:
             if not script_path.exists():
                 raise FileNotFoundError(f"Script file not found: {script_path}")
@@ -156,8 +156,21 @@ class ScriptExecutor:
 
             with pyodbc.connect(self.connection_string, autocommit=False) as conn:
                 with conn.cursor() as cursor:     
-                    self.logger.info(f"Executing script: {script_path}")     
-                    cursor.execute(sql_script)
+
+                    if databases:
+                        for database in databases:
+                            self.logger.info(f"Executing {script_path} on {database}.")
+                            cursor.execute(f"USE [{database}]")
+                            cursor.execute(sql_script)
+                    else:
+                        database = ""
+                        for part in self.connection_string.split(";"):
+                            key, _, value = part.partition("=")
+                            if key.strip().lower() == "database":
+                                database = value.strip()
+
+                        self.logger.info(f"Executing {script_path} on {database} from connection string.")
+                        cursor.execute(sql_script)
 
                     # Capture PRINT statements from SQL Server messages
                     messages = []
@@ -226,6 +239,19 @@ class SQLDeploymentPipeline:
         
         return filtered_script_path
 
+    def open_validation_panel(self, port, sql_script_path):
+         # Resolve path of validation_console.py relative to this module
+        module_dir = Path(__file__).parent
+        console_script = module_dir / "validation_console.py"
+
+        if not console_script.exists():
+            raise Exception(f"Cannot find {console_script}")
+
+        subprocess.Popen(
+            ["python", str(console_script), str(port), str(sql_script_path)],
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+
     def validate_script(self, script_path: Path) -> bool:
         validate_script = self.config.get("validate_script_before_execution", True)
 
@@ -237,10 +263,7 @@ class SQLDeploymentPipeline:
             server.listen(1)
 
             logging.info("Waiting for user response after script validation...")
-            subprocess.Popen(
-                ["python", "../validation_console.py", str(port), str(script_path)],
-                creationflags=subprocess.CREATE_NEW_CONSOLE
-            )
+            self.open_validation_panel(port, script_path)
 
             conn, _ = server.accept()
             response = conn.recv(1024).decode()
@@ -258,9 +281,10 @@ class SQLDeploymentPipeline:
     def execute_script(self, script_path: Path):
         """Executes the SQL script using ScriptExecutor."""
         connection_string = os.getenv("DB_CONNECTION_STRING", "")
+        databases = self.config.get("databases", [])
         
         executor = ScriptExecutor(connection_string)
-        is_success = executor.execute(script_path)
+        is_success = executor.execute(script_path, databases)
         if not is_success:
             raise Exception("Script execution failed.")
 
