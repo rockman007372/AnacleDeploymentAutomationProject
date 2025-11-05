@@ -24,7 +24,7 @@ class ScriptDownloader:
         self.logger = logger or module_logger
 
     def _get_hidden_fields(self):
-        response = self.session.get(self.base_url, timeout=120) # IIS refresh takes some time
+        response = self.session.get(self.base_url) # IIS refresh takes some time. No need timeout
         soup = BeautifulSoup(response.content, 'html.parser')
         return {
             '__VIEWSTATE': soup.find('input', {'name': '__VIEWSTATE'})['value'], # type: ignore
