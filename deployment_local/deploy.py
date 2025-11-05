@@ -203,7 +203,7 @@ def main():
             step = futures[future]
             try:
                 future.result()
-                logger.info(f"{step} completed successfully.")
+                logger.info(f"{step} completed.")
             except Exception:
                 logger.exception(f"{step} failed.")
                 sys.exit(1)

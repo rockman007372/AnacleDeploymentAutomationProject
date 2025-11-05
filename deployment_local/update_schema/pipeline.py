@@ -1,8 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 import os
 import socket
 import subprocess
 import sys
+import threading
 from dotenv import load_dotenv
 import requests
 import pyodbc
@@ -144,7 +146,6 @@ class ScriptExecutor:
         parts = []
         for key, value in config.items():
             parts.append(f"{key}={value}")
-
         return 'driver={SQL Server};' + ';'.join(parts) + ';'
 
     def write_execution_log(self, log_dir: Path, messages: list[str]):
@@ -175,7 +176,6 @@ class ScriptExecutor:
                                 messages.append(message[1])
 
                     conn.commit()
-                    self.logger.info(f"SQL script executed successfully on {database}.")
                     self.write_execution_log(log_dir, messages)
         
         except pyodbc.Error as e:
@@ -189,15 +189,40 @@ class ScriptExecutor:
         try:
             if not script_path.exists():
                 raise FileNotFoundError(f"Script file not found: {script_path}")
+            self.logger.info(f"SQL script to be executed: {script_path}")
 
             sql_script = script_path.read_text()
             log_dir = script_path.parent
 
             if databases:
-                for database in databases:
-                    cloned_config = self.connection_config.copy()
-                    cloned_config["database"] = database
-                    self.execute_using_config(sql_script, cloned_config, log_dir)
+                parent_thread_name = threading.current_thread().name
+                with ThreadPoolExecutor(max_workers=len(databases), thread_name_prefix=f"{parent_thread_name}-dbworker") as executor:
+                    futures = {}
+                    for database in databases:
+                        cloned_config = self.connection_config.copy()
+                        cloned_config["database"] = database
+                        future = executor.submit(
+                            self.execute_using_config, 
+                            sql_script, 
+                            cloned_config, 
+                            log_dir
+                        )
+                        futures[future] = database
+
+                    errors = []
+                    for future in as_completed(futures):
+                        database = futures[future]
+                        try:
+                            future.result() # raise exceptions if any
+                            self.logger.info(f"Completed execution on {database}.")
+                        
+                        except Exception as e:
+                            self.logger.error(f"Failed on {database}: {e}")
+                            errors.append((database, e))
+
+                    if errors:
+                        error_summary = ", ".join([f"{db}: {str(e)}" for db, e in errors])
+                        raise Exception(f"Failed on {len(errors)} database(s): {error_summary}")
             else:
                 self.execute_using_config(sql_script, self.connection_config, log_dir)
             
@@ -294,7 +319,6 @@ class SQLDeploymentPipeline:
 
     def execute_script(self, script_path: Path):
         """Executes the SQL script using ScriptExecutor."""
-
         connection_config = {
             "server":   os.getenv("server", ""),
             "database": os.getenv("database", ""),
