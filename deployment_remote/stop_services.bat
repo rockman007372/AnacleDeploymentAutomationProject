@@ -10,7 +10,7 @@ set failedCount=0
 set serviceCount=0
 
 echo ==================================================
-echo Stopping Services...
+echo                Stopping Services...
 echo ==================================================
 echo.
 
@@ -21,9 +21,9 @@ echo [%serviceCount%] Stopping: %serviceName%
 net stop "%serviceName%" >nul 2>&1
 
 if !errorlevel! EQU 0 (
-    echo     [SUCCESS] Service stopped successfully
+    echo [SUCCESS] Service stopped successfully
 ) else (
-    echo     [FAILED] Error code: !errorlevel!
+    echo [FAILED] Error code: !errorlevel!
     set /a failedCount+=1
 )
 echo.
@@ -32,18 +32,9 @@ shift
 goto :loop_args
 
 :after_loop
-echo ==================================================
-echo Summary:
-echo ==================================================
-set /a successCount=%serviceCount%-%failedCount%
-echo Total services: %serviceCount%
-echo Successfully stopped: %successCount%
-echo Failed to stop: %failedCount%
-echo ==================================================
-
 if %failedCount% GTR 0 (
     echo.
-    echo WARNING: Some services failed to stop!
+    echo [WARNING] Some services failed to stop!
     exit /b 1
 ) else (
     echo.

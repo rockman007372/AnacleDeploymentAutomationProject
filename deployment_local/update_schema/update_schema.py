@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # Create a unique log directory for this run
     root_log_dir = Path(config.get('log_dir', './logs/'))
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_dir = root_log_dir / f'run_{timestamp}'
+    log_dir = root_log_dir / f'update_schema_{timestamp}'
 
     # Ensure the log directory exists
     log_dir.mkdir(parents=True, exist_ok=True)

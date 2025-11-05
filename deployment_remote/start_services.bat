@@ -10,7 +10,7 @@ set failedCount=0
 set serviceCount=0
 
 echo ==================================================
-echo Starting Services...
+echo                Starting Services...
 echo ==================================================
 echo.
 
@@ -21,9 +21,9 @@ echo [%serviceCount%] Starting: %serviceName%
 net start "%serviceName%" >nul 2>&1
 
 if !errorlevel! EQU 0 (
-    echo     [SUCCESS] Service started successfully
+    echo [SUCCESS] Service started successfully
 ) else (
-    echo     [FAILED] Error code: !errorlevel!
+    echo [FAILED] Error code: !errorlevel!
     set /a failedCount+=1
 )
 echo.
@@ -32,18 +32,9 @@ shift
 goto :loop_args
 
 :after_loop
-echo ==================================================
-echo Summary:
-echo ==================================================
-set /a successCount=%serviceCount%-%failedCount%
-echo Total services: %serviceCount%
-echo Successfully started: %successCount%
-echo Failed to start: %failedCount%
-echo ==================================================
-
 if %failedCount% GTR 0 (
     echo.
-    echo WARNING: Some services failed to start!
+    echo [WARNING] Some services failed to start!
     exit /b 1
 ) else (
     echo.

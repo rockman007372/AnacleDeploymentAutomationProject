@@ -1,7 +1,10 @@
 @echo off
 
 :: Set log file
-set "LOGFILE=%~dp0deployment_%date:~-4,4%%date:~-10,2%%date:~-7,2%.log"
+@REM set "LOGFILE=%~dp0deployment_%date:~-4,4%%date:~-10,2%%date:~-7,2%.log"
+
+REM Store the script's directory
+set SCRIPT_DIR=%~dp0
 
 :: =========================================
 :: Ensure the script runs as Administrator
@@ -12,22 +15,23 @@ if %errorlevel% neq 0 (
     echo.
     echo Requesting administrative privileges...
     echo.
-    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    powershell -Command "Start-Process '%~f0' -Verb RunAs -ArgumentList '%CD%'"
     exit /b
 )
 
 :: Start logging from here
-call :main 2>&1 | powershell -Command "$input | Tee-Object -FilePath '%LOGFILE%'"
+call :main 
 exit /b
 
 :: =========================================
 :: Main Script
 :: =========================================
 :main
-:: Step 1: Back up the folders
-echo Starting backup process...
-echo.
 
+REM Change to script directory to ensure relative paths work
+pushd "%SCRIPT_DIR%"
+
+:: Step 1: Back up the folders
 call backup.bat "D:\MyBill_v10" || goto :error
 echo.
 
@@ -35,15 +39,24 @@ call backup.bat "D:\MyBill_v10-SP" || goto :error
 echo.
 
 echo All backups completed!
+echo.
 
 :: Step 2: Stop the services
-@REM call stop_services.bat "Anacle.EAM v10.0 Simplicity Service (MyBill v10)" "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)" || goto :error
+call stop_services.bat "Anacle.EAM v10.0 Simplicity Service (MyBill v10)" "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)" || goto :error
 
 :: Step 3: Extract deployment file in respective folders
-@REM call extract_deployment.bat || goto :error
+call extract.bat "YOUR_DEPLOYMENT_ZIP_FILE" "D:\MyBill_v10" || goto :error
+echo.
+
+call extract.bat "YOUR_DEPLOYMENT_ZIP_FILE" "D:\MyBill_v10-SP" || goto :error
+echo.
 
 :: Step 4: Enable services again
-@REM call start_services.bat "Anacle.EAM v10.0 Simplicity Service (MyBill v10)" "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)" || goto :error
+call start_services.bat "Anacle.EAM v10.0 Simplicity Service (MyBill v10)" "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)" || goto :error
+
+echo "Done!"
+pause
+exit /b 0
 
 :error
 echo.

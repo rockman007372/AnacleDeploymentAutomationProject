@@ -9,7 +9,7 @@ echo.
 
 echo All backups completed!
 pause
-exit
+exit /b 0
 
 :error
 echo.
