@@ -35,7 +35,9 @@ def setup_logging(log_dir: Path):
     return logger
 
 def load_config(path: str) -> dict:
-    with open(path, 'r') as f:
+    script_dir = Path(__file__).parent  # directory where main.py is located
+    config_path = script_dir / path
+    with open(config_path, 'r') as f:
         return json.load(f)
     
 def main():
