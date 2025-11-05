@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-from script_manager import SQLDeploymentPipeline
+from pipeline import SQLDeploymentPipeline
 
 def setup_logging(log_dir: Path):
     """Sets up logging to both console and file."""
@@ -40,7 +40,8 @@ def load_config(path: str) -> dict:
     with open(config_path, 'r') as f:
         return json.load(f)
     
-def main():
+# If called as a script
+if __name__ == "__main__":
     config = load_config('config.json')
 
     # Create a unique log directory for this run
@@ -57,6 +58,3 @@ def main():
     # Run the SQL deployment pipeline
     pipeline = SQLDeploymentPipeline(config, log_directory=log_dir, custom_logger=logger)
     pipeline.run()
-
-if __name__ == "__main__":
-    main()

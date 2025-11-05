@@ -136,44 +136,36 @@ class ScriptParser:
             return None
         
 class ScriptExecutor:
-    def __init__(self, connection_string: str, logger: Optional[logging.Logger]=None):
-        self.connection_string = connection_string
+    def __init__(self, connection_config: Dict, logger: Optional[logging.Logger]=None):
+        self.connection_config = connection_config
         self.logger = logger or module_logger
+    
+    def create_connection_string(self, config) -> str:
+        parts = []
+        for key, value in config.items():
+            parts.append(f"{key}={value}")
+
+        return 'driver={SQL Server};' + ';'.join(parts) + ';'
 
     def write_execution_log(self, log_dir: Path, messages: list[str]):
         log_dir.mkdir(parents=True, exist_ok=True)
         execution_log = log_dir / "sql_server_execution.log"
-        with open(execution_log, "w") as log_file:
-            log_file.write("\n".join(messages))
+        with open(execution_log, "a") as log_file:
+            log_file.write("\n".join(messages) + "\n")
         self.logger.info(f"Execution log written to: {execution_log}")
 
-    def execute(self, script_path: Path, databases: Optional[List[str]]=None) -> bool:
+    def execute_using_config(self, sql_script: str, connection_config: Dict, log_dir: Path):
+        database = connection_config["database"]
+        connection_string = self.create_connection_string(connection_config)
+
         try:
-            if not script_path.exists():
-                raise FileNotFoundError(f"Script file not found: {script_path}")
+            with pyodbc.connect(connection_string, autocommit=False) as conn:
+                with conn.cursor() as cursor:    
+                    self.logger.info(f"Executing SQL script on {database}.")
+                    cursor.execute(sql_script)
 
-            sql_script = script_path.read_text()
-
-            with pyodbc.connect(self.connection_string, autocommit=False) as conn:
-                with conn.cursor() as cursor:     
-
-                    if databases:
-                        for database in databases:
-                            self.logger.info(f"Executing {script_path} on {database}.")
-                            cursor.execute(f"USE [{database}]")
-                            cursor.execute(sql_script)
-                    else:
-                        database = ""
-                        for part in self.connection_string.split(";"):
-                            key, _, value = part.partition("=")
-                            if key.strip().lower() == "database":
-                                database = value.strip()
-
-                        self.logger.info(f"Executing {script_path} on {database} from connection string.")
-                        cursor.execute(sql_script)
-
-                    # Capture PRINT statements from SQL Server messages
                     messages = []
+                    messages.append(f"Database: {database}")
                     if cursor.messages:
                         for message in cursor.messages:
                             messages.append(message[1])
@@ -182,12 +174,34 @@ class ScriptExecutor:
                             for message in cursor.messages:
                                 messages.append(message[1])
 
-                    self.write_execution_log(script_path.parent, messages)
-
-                    # Commit the transaction
                     conn.commit()
-                    self.logger.info(f"SQL script executed successfully.")
-                    return True
+                    self.logger.info(f"SQL script executed successfully on {database}.")
+                    self.write_execution_log(log_dir, messages)
+        
+        except pyodbc.Error as e:
+            self.logger.error(f"Database error on {database}: {e}")
+            raise  # Re-raise so execute() can catch it
+        except Exception as e:
+            self.logger.error(f"Unexpected error on {database}: {e}")
+            raise
+
+    def execute(self, script_path: Path, databases: Optional[List[str]]=None) -> bool:
+        try:
+            if not script_path.exists():
+                raise FileNotFoundError(f"Script file not found: {script_path}")
+
+            sql_script = script_path.read_text()
+            log_dir = script_path.parent
+
+            if databases:
+                for database in databases:
+                    cloned_config = self.connection_config.copy()
+                    cloned_config["database"] = database
+                    self.execute_using_config(sql_script, cloned_config, log_dir)
+            else:
+                self.execute_using_config(sql_script, self.connection_config, log_dir)
+            
+            return True
                         
         except Exception as e:
             self.logger.error(f"An error occurred during SQL execution: {e}")
@@ -280,10 +294,17 @@ class SQLDeploymentPipeline:
 
     def execute_script(self, script_path: Path):
         """Executes the SQL script using ScriptExecutor."""
-        connection_string = os.getenv("DB_CONNECTION_STRING", "")
+
+        connection_config = {
+            "server":   os.getenv("server", ""),
+            "database": os.getenv("database", ""),
+            "uid":      os.getenv("uid", ""),
+            "pwd":      os.getenv("pwd", "")
+        }
+
         databases = self.config.get("databases", [])
         
-        executor = ScriptExecutor(connection_string)
+        executor = ScriptExecutor(connection_config, self.logger)
         is_success = executor.execute(script_path, databases)
         if not is_success:
             raise Exception("Script execution failed.")

@@ -9,14 +9,14 @@ from pathlib import Path
 from datetime import datetime
 import zipfile
 
-sys.path.append('../')
-
-from build.build import Builder
-from update_schema.script_manager import SQLDeploymentPipeline
+from build.builder import Builder
+from update_schema.pipeline import SQLDeploymentPipeline
 
 
 def load_config(path: str) -> dict:
-    with open(path, 'r') as f:
+    script_dir = Path(__file__).parent  # directory where main.py is located
+    config_path = script_dir / path
+    with open(config_path, 'r') as f:
         return json.load(f)
 
 
