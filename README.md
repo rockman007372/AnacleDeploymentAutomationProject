@@ -39,23 +39,23 @@ Example `config.json`:
   "log_dir": "./logs/",
   "url": "http://localhost/SP/applogin.aspx",
   "update_all_tables": false,
-  "tables": [
-    "GiroDeduction",
-    "GiroAdhocDeduction"
-  ],
-  "validate_script_before_execution": true
+  "tables": ["GiroDeduction", "GiroAdhocDeduction"],
+  "validate_script_before_execution": true,
+  "databases": ["abell.v10.0-MyBill-Deve", "abell.v10.0-MyBill-SP"]
 }
 ```
 
 #### Config Options
 
-| Key                                  | Description                                                                                             |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| **log_dir**                          | Directory where execution logs will be stored.                                                          |
-| **url**                              | The web app URL used to fetch the schema update script.                                                 |
-| **update_all_tables**                | If `true`, runs the full script on all tables. If `false`, limits updates to specified tables.          |
-| **tables**                           | List of table names to include when filtering the SQL script. Ignored if `update_all_tables` is `true`. |
-| **validate_script_before_execution** | If `true`, spawns a new console to preview the script and ask for permission to proceed execution.      |
+| Key                                  | Description                                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| **log_dir**                          | Directory where execution logs will be stored.                                                                     |
+| **url**                              | The web app URL used to fetch the schema update script.                                                            |
+| **update_all_tables**                | If `true`, runs the full script on all tables. If `false`, limits updates to specified tables.                     |
+| **tables**                           | List of table names to include when filtering the SQL script. Ignored if `update_all_tables` is `true`.            |
+| **validate_script_before_execution** | If `true`, spawns a new console to preview the script and ask for permission to proceed execution.                 |
+| **databases**                        | List of databases to execute the schema update script on. **If empty, use the database in the connection string**. |
+
 
 ### Setup and Run
 
