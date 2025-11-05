@@ -23,7 +23,7 @@ def setup_logging(log_dir: Path):
 
     # Formatter
     formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        "%(asctime)s - %(levelname)s - %(threadName)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
@@ -42,7 +42,7 @@ def load_config(path: str) -> dict:
     
 # If called as a script
 if __name__ == "__main__":
-    config = load_config('config.json')
+    config = load_config('update_schema.cfg')
 
     # Create a unique log directory for this run
     root_log_dir = Path(config.get('log_dir', './logs/'))

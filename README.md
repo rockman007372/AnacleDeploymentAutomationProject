@@ -59,17 +59,20 @@ Example `config.json`:
 
 ### Setup and Run
 
-1. Create a `.env` file in `update_schema` directory and add your database connection string.
+1. Create a `.env` file in `./deployment_local/update_schema` directory and add your database connection information.
 
-```
-DB_CONNECTION_STRING=Driver={SQL Server};server=denis4\SQL2022DEVE; database=abell.v10.0-MyBill-Deve; uid=username; pwd=pasword;
+```env
+server=servername
+database=dbname
+uid=username 
+pwd=pasword
 ```
 
-2. Update the `config.json` file in `update_schema` directory.
+2. Update the `update_schema.cfg` file in `./deployment_local/update_schema` directory.
 
 3. Run from the project root (where this README is located):
 
 ```cmd
-python update_schema/main.py
+python deployment_local/update_schema/update_schema.py
 ```
 
