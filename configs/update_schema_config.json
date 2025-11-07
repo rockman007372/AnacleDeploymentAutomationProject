@@ -1,5 +1,5 @@
 {
-    "log_dir": "./logs/",
+    "log_dir": "logs/update_schema",
     "url": "http://localhost/SP/applogin.aspx",
     "update_all_tables": false,
     "tables": [],

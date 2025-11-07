@@ -10,7 +10,7 @@ from datetime import datetime
 import zipfile
 
 from build.builder import Builder
-from update_schema.pipeline import SQLDeploymentPipeline
+from sql_deployment_utils.pipeline import SQLDeploymentPipeline
 
 
 def load_config(path: str) -> dict:
