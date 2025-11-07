@@ -1,22 +1,29 @@
 import json
+import sys
 from typing import Dict
+from pathlib import Path
 
-from builder import Builder
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-def load_and_validate_config(path: str) -> Dict:
+from utils.builder import Builder
+
+def load_and_validate_config(path: Path) -> Dict:
     with open(path, 'r') as f:
         config = json.load(f)
 
     required_fields = ["solution_dir", "dev_cmd_path"]
-    for field in required_fields:
-        if field not in config:
-            exit(1)
+    missing_fields = [k for k in required_fields if k not in config]
+    if missing_fields:
+        print(f"Missing required field: {missing_fields}")
+        exit(1)
 
     return config
 
 
 if __name__ == "__main__":
-    config = load_and_validate_config('build.cfg.json')
+    root_dir = Path(__file__).parent.parent
+    config = load_and_validate_config(root_dir / "configs" / "build_config.json")
     builder = Builder(config)
 
     available_projects = ""
@@ -32,5 +39,8 @@ if __name__ == "__main__":
         if response.isnumeric() and int(response) > 0 and int(response) <= len(available_projects):
             break
         print("Please indicate a valid project id.")
-            
-    builder.build(int(response))
+    
+    if not response:
+        builder.build()
+    else:
+        builder.build(int(response))

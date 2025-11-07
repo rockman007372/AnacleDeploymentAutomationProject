@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 class Builder:
     def __init__(self, config: Dict, custom_logger: Optional[logging.Logger] = None):
         self.config = config
-        self.logger = custom_logger or self._setup_logging(Path(config.get('log_dir', './logs/')))
+        self.logger = custom_logger or self._setup_logging(Path(config.get('log_dir', './logs/build')))
 
     def _setup_logging(self, log_dir: Path):
         """Sets up logging to both console and file."""
@@ -81,10 +81,10 @@ class Builder:
             # Build all if no specific project is passed
             if project_id is None:
                 targets = projects.values()
-            else:
-                if project_id not in projects:
-                    raise ValueError(f"Unknown project ID: {project_id}")
+            elif project_id in projects:
                 targets = [projects[project_id]]
+            else:
+                raise ValueError(f"Unknown project ID: {project_id}")
 
             for target in targets:
                 self.run_command(target["cmd"], f"Building/Publishing {target['name']}")
