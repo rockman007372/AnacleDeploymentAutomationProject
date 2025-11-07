@@ -61,12 +61,12 @@ def get_db_connection():
 if __name__ == "__main__":
     file_directory = Path(__file__)
     root_directory = file_directory.parent.parent
-    env_directory = root_directory / "configs" / ".env"
-    config_directory = root_directory / "configs" / "update_schema_config.json"
+    env_path = root_directory / "configs" / ".env"
+    config_path = root_directory / "configs" / "update_schema_config.json"
 
-    load_dotenv(env_directory)
+    load_dotenv(env_path)
     db_connection = get_db_connection()
-    config = load_config(config_directory)
+    config = load_config(config_path)
     log_dir = create_current_run_log_dir(config)
     log_dir.mkdir(parents=True, exist_ok=True)    
     logger = setup_logging(log_dir)

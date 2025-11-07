@@ -1,12 +1,12 @@
 {
-    "log_dir": "logs",
+    "log_dir": "logs/deploy",
     "build_config": {
         "dev_cmd_path": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat",
         "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell/"
     },
     "update_schema_config": {
         "url": "http://localhost/SP/applogin.aspx",
-        "update_all_tables": true,
+        "update_all_tables": false,
         "tables": ["GiroDeduction"],
         "validate_script_before_execution": true,
         "databases": ["abell.v10.0-MyBill-Deve", "abell.v10.0-MyBill-SP"]

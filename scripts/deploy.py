@@ -9,15 +9,27 @@ from pathlib import Path
 from datetime import datetime
 import zipfile
 
-from build.builder import Builder
-from sql_deployment_utils.pipeline import SQLDeploymentPipeline
+from dotenv import load_dotenv
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from utils.builder import Builder
+from utils.pipeline import SQLDeploymentPipeline
 
 
-def load_config(path: str) -> dict:
-    script_dir = Path(__file__).parent  # directory where main.py is located
-    config_path = script_dir / path
+def load_config(config_path: Path) -> dict:
     with open(config_path, 'r') as f:
         return json.load(f)
+
+
+def get_db_connection():
+    return {
+        "server":   os.getenv("server", ""),
+        "database": os.getenv("database", ""),
+        "uid":      os.getenv("uid", ""),
+        "pwd":      os.getenv("pwd", "")
+    }
 
 
 def init_logger(log_dir: Path) -> logging.Logger:
@@ -119,16 +131,15 @@ def zip_with_python(folders, zip_path, logger: logging.Logger):
 
 def build_solution(config, logger):
     logger.info("Starting Build...")
-    
     builder = Builder(config.get('build_config', {}), custom_logger=logger)
     builder.build()
 
 
-def deploy_sql(config, log_dir, logger):
+def deploy_sql(config: dict, db_connection: dict, log_dir, logger):
     logger.info("Starting SQL Deployment...")
-
     sql_pipeline = SQLDeploymentPipeline(
-        config.get('update_schema_config', {}),
+        config=config.get('update_schema_config', {}),
+        db_connection=db_connection,
         log_directory=log_dir,
         custom_logger=logger
     )
@@ -137,7 +148,6 @@ def deploy_sql(config, log_dir, logger):
 
 def publish_artifacts(config, logger):
     logger.info("Publishing artifacts...")
-
     solution_dir: Path = Path(config["build_config"]["solution_dir"])
     dest_dir: Path = Path(config["destination_dir"]) / f"UAT_{datetime.now().strftime("%Y%m%d")}"
     zip_output: bool = config.get("zip_output", True)
@@ -181,21 +191,30 @@ def publish_artifacts(config, logger):
 
 
 def main():
-    config = load_config('deployment.cfg.json')
+    file_directory = Path(__file__)
+    root_directory = file_directory.parent.parent
+    env_path = root_directory / "configs" / ".env"
+    config_path = root_directory / "configs" / "deploy_config.json"
+
+    # Initialize env and config
+    load_dotenv(env_path)
+    config = load_config(config_path)
+    db_connection = get_db_connection()
     
     # Initialize logging directory and logger
-    root_log_dir = Path(config.get('log_dir', './logs/'))
+    root_log_dir = Path(config.get('log_dir', './logs/deploy'))
     log_dir = init_log_dir(root_log_dir)
     logger = init_logger(log_dir)
 
     logger.info(f"Deployment process started.")
 
-    # Pipeline   
+    # Build LogicLayer, Service and API.Interface first
     build_solution(config, logger)
 
+    # Update schema and prepare deployment zip file at the same time
     with ThreadPoolExecutor(max_workers=2, thread_name_prefix="Worker") as executor:
         futures = {
-            executor.submit(deploy_sql, config, log_dir, logger): "SQL Deployment",
+            executor.submit(deploy_sql, config, db_connection, log_dir, logger): "SQL Deployment",
             executor.submit(publish_artifacts, config, logger): "Artifact Publish"
         }
 
