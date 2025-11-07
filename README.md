@@ -59,7 +59,7 @@ Example `config.json`:
 
 ### Setup and Run
 
-1. Create a `.env` file in `./deployment_local/update_schema` directory and add your database connection information.
+1. Create a `.env` file in `./configs/` directory and add your database connection information.
 
 ```env
 server=servername
@@ -68,11 +68,13 @@ uid=username
 pwd=pasword
 ```
 
-2. Update the `update_schema.cfg` file in `./deployment_local/update_schema` directory.
+2. Update the `update_schema_config.json` file in `./configs/` directory.
 
 3. Run from the project root (where this README is located):
 
 ```cmd
-python deployment_local/update_schema/update_schema.py
+python scripts/update_schema.py
 ```
 
+### Notable implementations
+- If multiple databases are specified, `update_schema.py` can execute the SQL script on these databases in parallel using `concurrency.futures.ThreadPoolExecutor` library.
