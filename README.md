@@ -84,26 +84,49 @@ python scripts/update_schema.py
 
 A simple console app that builds specific projects in `abell.sln`.
 
-Previously, developers at Anacle are adviced to build the projects in the IDE (Visual Studio, Rider), which made it hard to automate the build process in a script. After some research and experimentation, I discovered how to build them from the command line.
+Previously, developers at Anacle are adviced to build the projects in the IDE (Visual Studio, Rider), preventing automation attempts. After some research and experimentation, I discovered how to build them from the command line.
 
 ### How to build using command line
 
-To build any projects, we must first open the Visual Studio Development Command (`VsDevCmd.bat`). The `VsDebCmd` instantiates environment variables and macros that allow post-build events to be executed for certain projects (e.g. `LogicLayer.csproj`).
+Before running any build commands, you must open the Visual Studio Developer Command Prompt (`VsDevCmd.bat`). 
+
+This sets up the required environment variables and macros used by certain projects (e.g. `LogicLayer.csproj`) during post-build events.
 
 ```cmd
 "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat"
 ```
 
-Once `VsDebCmd` is run, you can build any projects using the `msbuild` command. For example, to build `LogicLayer.csproj`:
+You can then build any projects using the `msbuild` command. For example, to build `LogicLayer.csproj`:
 
 ```cmd
 msbuild "PATH_TO_SOLUTION" /t:LogicLayer:Rebuild /v:diag
 ```
 > [!WARNING]
-> You must build the project by calling `msbuild` on the solution path (e.g. `.../abell.root/abell/abell.sln`), then specifies the project name in the `/t` flag. This ensures post-build events are executed.
+> Always build via the solution file (.sln), not the individual .csproj.
+This ensures all post-build events execute correctly (e.g. `LogicLayer.csproj` depends on this).
 
-Some projects require us to publish instead of just building. To publish a project, run:
+Some projects (APIs) require us to publish instead of just building. To publish a project, run:
 
 ```cmd
-msbuild "PATH_TO_PROJECT" /p:DeployOnBuild=true /p:PublishProfile=DevOpsDebug /p:Configuration=Debug /v:m
+msbuild "C:\Path\To\Project.csproj" ^
+  /p:DeployOnBuild=true ^
+  /p:PublishProfile=DevOpsDebug ^
+  /p:Configuration=Debug ^
+  /v:m
 ```
+
+>[!NOTE] Adjust the PublishProfile and Configuration values to match your environment (e.g. Release, UAT, etc.).
+
+### Setup and Run
+
+1. Update the `build_config.json` in `./configs/` directory. Sample config:
+
+```json
+{
+    "log_dir": "logs/build",
+    "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell",
+    "dev_cmd_path": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat"
+}
+```
+
+2. Run the script and indicate which project to build.
