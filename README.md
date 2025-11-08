@@ -86,6 +86,8 @@ A simple console app that builds specific projects in `abell.sln`.
 
 Previously, developers at Anacle are adviced to build the projects in the IDE (Visual Studio, Rider), preventing automation attempts. After some research and experimentation, I discovered how to build them from the command line.
 
+---
+
 ### How to build using command line
 
 Before running any build commands, you must open the Visual Studio Developer Command Prompt (`VsDevCmd.bat`). 
