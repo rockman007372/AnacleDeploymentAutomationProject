@@ -115,7 +115,8 @@ msbuild "C:\Path\To\Project.csproj" ^
   /v:m
 ```
 
->[!NOTE] Adjust the PublishProfile and Configuration values to match your environment (e.g. Release, UAT, etc.).
+>[!NOTE]
+> Adjust the PublishProfile and Configuration values to match your environment (e.g. Release, UAT, etc.).
 
 ### Setup and Run
 
