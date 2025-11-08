@@ -6,9 +6,9 @@ This repository contains automation scripts used at my workplace, **Anacle (MRI 
 
 ---
 
-## `update_schema`
+## `update_schema.py`
 
-A Python console app that automates the process of fetching and executing database schema update scripts.
+A Python script that automates the process of fetching and executing database schema update scripts.
 
 ### Problem
 
@@ -78,3 +78,32 @@ python scripts/update_schema.py
 
 ### Notable implementations
 - If multiple databases are specified, `update_schema.py` can execute the SQL script on these databases in parallel using `concurrency.futures.ThreadPoolExecutor` library.
+- The whole SQL deployment pipeline are abstracted into `utils/pipeline.py`. This allows the pipeline to be reused as a package in other scripts.
+
+## `build.py`
+
+A simple console app that builds specific projects in `abell.sln`.
+
+Previously, developers at Anacle are adviced to build the projects in the IDE (Visual Studio, Rider), which made it hard to automate the build process in a script. After some research and experimentation, I discovered how to build them from the command line.
+
+### How to build using command line
+
+To build any projects, we must first open the Visual Studio Development Command (`VsDevCmd.bat`). The `VsDebCmd` instantiates environment variables and macros that allow post-build events to be executed for certain projects (e.g. `LogicLayer.csproj`).
+
+```cmd
+"C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat"
+```
+
+Once `VsDebCmd` is run, you can build any projects using the `msbuild` command. For example, to build `LogicLayer.csproj`:
+
+```cmd
+msbuild "PATH_TO_SOLUTION" /t:LogicLayer:Rebuild /v:diag
+```
+> [!WARNING]
+> You must build the project by calling `msbuild` on the solution path (e.g. `.../abell.root/abell/abell.sln`), then specifies the project name in the `/t` flag. This ensures post-build events are executed.
+
+Some projects require us to publish instead of just building. To publish a project, run:
+
+```cmd
+msbuild "PATH_TO_PROJECT" /p:DeployOnBuild=true /p:PublishProfile=DevOpsDebug /p:Configuration=Debug /v:m
+```
