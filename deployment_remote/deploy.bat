@@ -1,8 +1,5 @@
 @echo off
 
-:: Set log file
-@REM set "LOGFILE=%~dp0deployment_%date:~-4,4%%date:~-10,2%%date:~-7,2%.log"
-
 REM Store the script's directory
 set SCRIPT_DIR=%~dp0
 
@@ -44,22 +41,19 @@ echo.
 :: Step 2: Stop the services
 call stop_services.bat "Anacle.EAM v10.0 Simplicity Service (MyBill v10)" "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)" || goto :error
 
-:: Step 3: Extract deployment file in respective folders
-call extract.bat "YOUR_DEPLOYMENT_ZIP_FILE" "D:\MyBill_v10" || goto :error
-echo.
-
-call extract.bat "YOUR_DEPLOYMENT_ZIP_FILE" "D:\MyBill_v10-SP" || goto :error
+:: Step 3: Extract deployment file in respective folders (in parallel)
+call extract.bat "YOUR_ZIP_FILE_PATH" "D:\MyBill_v10" "D:\MyBill_v10-SP" || goto :error
 echo.
 
 :: Step 4: Enable services again
 call start_services.bat "Anacle.EAM v10.0 Simplicity Service (MyBill v10)" "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)" || goto :error
 
-echo "Done!"
+echo "Deployment completed!"
 pause
 exit /b 0
 
 :error
 echo.
-echo ERROR: Backup process terminated due to failure.
+echo ERROR: Deployment terminated due to failure.
 pause
 exit /b 1
