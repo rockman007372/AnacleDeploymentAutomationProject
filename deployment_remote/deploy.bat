@@ -29,10 +29,10 @@ REM Change to script directory to ensure relative paths work
 pushd "%SCRIPT_DIR%"
 
 :: Step 1: Back up the folders
-call backup.bat "D:\MyBill_v10" || goto :error
+call backup.bat "D:\MyBill_v10" "D:\Deployment Backup" || goto :error
 echo.
 
-call backup.bat "D:\MyBill_v10-SP" || goto :error
+call backup.bat "D:\MyBill_v10-SP" "D:\Deployment Backup" || goto :error
 echo.
 
 echo All backups completed!

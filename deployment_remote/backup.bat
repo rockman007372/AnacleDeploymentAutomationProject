@@ -6,17 +6,7 @@ echo        Backing up %~1...
 echo ==================================================
 echo.
 
-
 REM ===== CONFIGURATION =====
-REM Set your base backup directory
-set "BASE_BACKUP_DIR=D:\Deployment Backup"
-
-REM Check if base backup directory exists
-if not exist "%BASE_BACKUP_DIR%" (
-    echo [ERROR] Base backup directory not found: %BASE_BACKUP_DIR%
-    exit /b 1
-)
-
 REM Set the path to 7-Zip (adjust if needed)
 set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
 
@@ -42,6 +32,21 @@ set "SOURCE_DIR=%~1"
 REM Check if source directory exists
 if not exist "%SOURCE_DIR%" (
     echo [ERROR] Source directory not found: %SOURCE_DIR%
+    exit /b 1
+)
+
+REM Check if base backup directory was provided as argument
+if "%~2"=="" (
+    echo [ERROR] No base backup directory provided
+    echo Usage: %~nx0 "C:\Path\To\Source\Directory" "D:\Path\To\Base\Backup\Directory"
+    exit /b 1
+)
+
+set "BASE_BACKUP_DIR=%~2"
+
+REM Check if base backup directory exists
+if not exist "%BASE_BACKUP_DIR%" (
+    echo [ERROR] Base backup directory not found: %BASE_BACKUP_DIR%
     exit /b 1
 )
 
