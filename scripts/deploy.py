@@ -1,13 +1,15 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import shutil
 import sys
 import json
 import logging
 import subprocess
-from pathlib import Path
-from datetime import datetime
 import zipfile
+import paramiko
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+from pathlib import Path
+from typing import Dict
 
 from dotenv import load_dotenv
 
@@ -188,6 +190,8 @@ def publish_artifacts(config, logger):
             zip_with_7zip(folders_to_zip, zip_file, seven_zip_path, logger)
         else:
             zip_with_python(folders_to_zip, zip_file, logger)
+    
+    logger.info("✅ Actifact published successfully.")
 
 
 def main():
@@ -222,7 +226,6 @@ def main():
             step = futures[future]
             try:
                 future.result()
-                logger.info(f"{step} completed.")
             except Exception:
                 logger.exception(f"{step} failed.")
                 sys.exit(1)
