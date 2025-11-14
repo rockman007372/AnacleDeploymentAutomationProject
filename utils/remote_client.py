@@ -10,7 +10,7 @@ class Denis4Client():
         self.config = config
         self.logger = logger or logging.getLogger()
         self.ssh_client = paramiko.SSHClient()
-        self.execution_log = self.create_execution_log_file()
+        self.execution_log = self.get_execution_log_file()
 
     def validate_config(self, config: Dict):
         required_keys = [
@@ -59,6 +59,20 @@ class Denis4Client():
             self.ssh_client = paramiko.SSHClient()
             self.connect_to_denis4()
 
+    def get_execution_log_file(self) -> Path:
+        '''
+        Return the path of the execution log file, 
+        which stores all stdout/stderr info from the remote server.
+        This is separated from the app.log file.
+        '''
+        log_dir = Path(self.config["log_dir"])
+        log_file = log_dir / "denis4.log"
+
+        if not log_dir.exists():
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+        return log_file
+
     def execute_command(self, command: str) -> tuple[str, str, int]:
         self.ensure_connected()
         try:
@@ -93,7 +107,6 @@ class Denis4Client():
             self.logger.error(f"Command execution failed: {e}")
             raise
 
-
     def __del__(self):
         """Cleanup on deletion"""
         try:
@@ -101,20 +114,6 @@ class Denis4Client():
                 self.ssh_client.close()
         except:
             pass
-
-    def create_execution_log_file(self) -> Path:
-        '''
-        Return the path of the execution log file, 
-        which stores all stdout/stderr info from the remote server.
-        This is separated from the app.log file.
-        '''
-        log_dir = Path(self.config["log_dir"])
-        log_file = log_dir / "denis4.log"
-
-        if not log_dir.exists():
-            log_dir.mkdir(parents=True, exist_ok=True)
-
-        return log_file
 
     def backup(self, directories_to_backup: List[Path], base_backup_dir: Path) -> bool:
         '''
@@ -151,3 +150,40 @@ class Denis4Client():
             self.logger.error(f"Upload {local_path} to {remote_path} failed: {e}")
             return False
         
+    def stop_services(self, services: List[str]):
+        """Stop a list of services"""
+        self.ensure_connected()
+        remote_script_dir = Path(self.config["remote_scripts_dir"])
+        stop_services_script = remote_script_dir / "stop_services.bat"
+
+        arguments = ' '.join(map(lambda service: f'"{service}"', services))
+        cmd = f'{stop_services_script} {arguments}'
+
+        self.logger.info(f"Stopping services: {services}...")
+        _, _, exit_code = self.execute_command(cmd)
+        if exit_code != 0:
+            self.logger.error(f"Failed to stop {services}. Check remote execution log for details.")
+        else:
+            self.logger.info("Services stopped successfully.")
+
+        return exit_code == 0
+        
+    def start_services(self, services: List[str]):
+        """Start a list of services"""
+        self.ensure_connected()
+        remote_script_dir = Path(self.config["remote_scripts_dir"])
+        start_services_script = remote_script_dir / "start_services.bat"
+
+        arguments = ' '.join(map(lambda service: f'"{service}"', services))
+        cmd = f'{start_services_script} {arguments}'
+
+        self.logger.info(f"Starting services: {services}...")
+        _, _, exit_code = self.execute_command(cmd)
+        if exit_code != 0:
+            self.logger.error(f"Failed to start {services}. Check remote execution log for details.")
+        else:
+            self.logger.info("Services started successfully.")
+
+        return exit_code == 0
+
+    
