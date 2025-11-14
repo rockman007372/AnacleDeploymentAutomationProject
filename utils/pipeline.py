@@ -232,7 +232,7 @@ class SQLDeploymentPipeline:
         '''
         config: Configuration dictionary.\n
         db_connection: Database connection information.\n
-        log_directory: Directory to store downloaded script, processed scripts, and SQL server execution log.\n
+        log_directory: Directory to store downloaded script, processed script, and SQL server execution log.\n
         custom_logger: Optional custom logger for logging. The log file may or may not be in log_directory.
         '''
         self.validate_config(config)
