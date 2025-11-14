@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.remote_client import Denis4Client
+from utils.remote import Denis4Client
 
 def load_config(path: Path) -> dict:
     with open(path, 'r') as f:
