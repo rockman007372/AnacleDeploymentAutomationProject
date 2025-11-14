@@ -4,11 +4,14 @@ from typing import Dict, List, Optional
 
 import paramiko
 
+# Module-level fallback logger
+module_logger = logging.getLogger(__name__)
+
 class Denis4Client():
     def __init__(self, config: Dict, logger: Optional[logging.Logger] = None) -> None:
         self.validate_config(config)
         self.config = config
-        self.logger = logger or logging.getLogger()
+        self.logger = logger or module_logger
         self.ssh_client = paramiko.SSHClient()
         self.execution_log = self.get_execution_log_file()
 
@@ -31,9 +34,9 @@ class Denis4Client():
         try:
             self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             self.ssh_client.connect(server, username=username, password=password)
-            self.logger.info(f"Connected to {server}")
+            self.logger.info(f"Connected to {username}@{server}")
         except Exception as e:
-            self.logger.error(f"Failed to connect to {server}: {e}")
+            self.logger.error(f"Failed to connect to {username}@{server}: {e}")
             raise
 
     def is_connected(self) -> bool:

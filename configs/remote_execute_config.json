@@ -1,5 +1,6 @@
 {
     "remote_scripts_dir": ".\\Desktop\\UAT_SP_script",
+    "base_deployment_dir": "D:\\Deployment",
     "base_backup_dir": "D:\\Deployment Backup",
     "directories_to_backup": ["D:\\MyBill_v10", "D:\\MyBill_v10-SP"],
     "services": ["Anacle.EAM v10.0 Simplicity Service (MyBill v10)", "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)"]

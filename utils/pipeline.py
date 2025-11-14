@@ -1,14 +1,11 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
-import os
 import socket
 import subprocess
 import sys
 import threading
-from dotenv import load_dotenv
 import requests
 import pyodbc
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List, Optional
 from bs4 import BeautifulSoup
