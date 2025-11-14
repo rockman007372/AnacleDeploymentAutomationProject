@@ -37,7 +37,7 @@ class Builder:
         self.logger.info(f"{step_name}...")
         self.logger.debug(f"Command: {command}")
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        self.logger.debug(result.stdout)
+        # self.logger.debug(result.stdout)
         if result.returncode != 0:
             self.logger.error(result.stderr)
             raise RuntimeError(f"{step_name} failed: {result.stderr}")

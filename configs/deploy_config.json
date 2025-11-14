@@ -1,20 +1,20 @@
 {
-    "log_dir": "logs/deploy",
+    "log_dir": "C:/Users/rockm/Desktop/Deployment Scripts/logs/deploy",
     "build_config": {
         "dev_cmd_path": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat",
-        "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell/"
+        "7zip_path": "C:/Program Files/7-Zip/7z.exe",
+        "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell/",
+        "publish_dir": "D:/deployment/SP",
+        "remove_config_files": true,
+        "zip_output": true
     },
     "update_schema_config": {
         "url": "http://localhost/SP/applogin.aspx",
-        "update_all_tables": true,
+        "update_all_tables": false,
         "tables": [],
         "validate_script_before_execution": false,
         "databases": ["abell.v10.0-MyBill-Deve", "abell.v10.0-MyBill-SP"]
     },
-    "destination_dir": "D:/deployment/SP",
-    "remove_config_files": true,
-    "zip_output": true,
-    "7zip_path": "C:/Program Files/7-Zip/7z.exe",
     "remote_config": {
         "remote_scripts_dir": ".\\Desktop\\UAT_SP_script",
         "base_deployment_dir": "D:\\Deployment",
