@@ -1,0 +1,5 @@
+{
+    "remote_scripts_dir": ".\\Desktop\\UAT_SP_script",
+    "base_backup_dir": "D:\\Deployment Backup",
+    "directories_to_backup": ["D:\\MyBill_v10", "D:\\MyBill_v10-SP"]
+}

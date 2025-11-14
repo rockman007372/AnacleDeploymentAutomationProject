@@ -1,26 +1,15 @@
 import logging
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional
 
 import paramiko
 
-config = {
-    "log_dir": "",
-    "server": "",
-    "user": "",
-    "password": "",
-    "remote_scripts_dir": "",
-    "base_backup_dir": "",
-    "directories_to_backup": [],
-}
-
 class Denis4Client():
-    def __init__(self, config: Dict, logger: logging.Logger) -> None:
+    def __init__(self, config: Dict, logger: Optional[logging.Logger] = None) -> None:
         self.validate_config(config)
         self.config = config
         self.logger = logger or logging.getLogger()
         self.ssh_client = paramiko.SSHClient()
-        self.connect_to_denis4()
         self.execution_log = self.create_execution_log_file()
 
     def validate_config(self, config: Dict):
@@ -30,8 +19,6 @@ class Denis4Client():
             "user", 
             "password", 
             "remote_scripts_dir",
-            "base_backup_dir", 
-            "directories_to_backup",
         ]
         missing = [k for k in required_keys if k not in config]
         if missing:
@@ -82,6 +69,10 @@ class Denis4Client():
             
             stdout_text = stdout.read().decode()
             stderr_text = stderr.read().decode()
+
+            # Normalize Windows CRLF → LF
+            stdout_text = stdout_text.replace("\r\n", "\n")
+            stderr_text = stderr_text.replace("\r\n", "\n")
             
             if exit_code != 0:
                 self.logger.error(f"Command {command} failed with exit code {exit_code}")
@@ -91,6 +82,10 @@ class Denis4Client():
             # Log stderr even on success (might contain warnings)
             if stderr_text:
                 self.logger.warning(f"stderr: {stderr_text}")
+
+            # Write stdout to execution logs 
+            with open(self.execution_log, "a") as f:
+                f.write(stdout_text)
             
             return stdout_text, stderr_text, exit_code
             
@@ -111,37 +106,48 @@ class Denis4Client():
         '''
         Return the path of the execution log file, 
         which stores all stdout/stderr info from the remote server.
+        This is separated from the app.log file.
         '''
         log_dir = Path(self.config["log_dir"])
         log_file = log_dir / "denis4.log"
 
-        if not log_file.exists():
-            log_file.mkdir(parents=True, exist_ok=True)
+        if not log_dir.exists():
+            log_dir.mkdir(parents=True, exist_ok=True)
 
         return log_file
 
-    def backup(self):
-        remote_script_dir = Path(self.config["remote_script_dir"])
+    def backup(self, directories_to_backup: List[Path], base_backup_dir: Path) -> bool:
+        '''
+        Create backups at base backup directory for the given directories.
+        Execute the "backup.bat" script on remote server, which backups 
+        "webapp", "service", "TPAPI" in the given directory.
+        '''
+        remote_script_dir = Path(self.config["remote_scripts_dir"])
         backup_script = remote_script_dir / "backup.bat"
-        base_backup_dir = Path(self.config["base_backup_dir"])
-        directories_to_backup = map(lambda dir: Path(dir), self.config.get("directories_to_backup", []))
 
-        # TODO: paralellize
+        # TODO: paralellize? Maybe no need since publishing solution takes a longer time
         for directory in directories_to_backup:
-            cmd = f'{backup_script} {directory} {base_backup_dir}'
-            stdout, stderr, exit_code = self.execute_command(cmd)
+            self.logger.info(f"Backing up {directory}...")
+            cmd = f'{backup_script} "{directory}" "{base_backup_dir}"'
+            _, _, exit_code = self.execute_command(cmd)
+            if exit_code != 0:
+                self.logger.error(f"Failed to backup {directory}. Check remote execution log for details.")
+                return False
+            self.logger.info(f"Back up {directory} successfully.")
 
-
-        self.logger.info("Backup completed.")
+        self.logger.info("All backups completed.")
+        return True
     
-    def upload_file(self, local_path: str, remote_path: str):
+    def upload_file(self, local_path: Path, remote_path: Path) -> bool:
         """Upload a file to remote server"""
         self.ensure_connected()
         try:
             sftp = self.ssh_client.open_sftp()
-            sftp.put(local_path, remote_path)
+            sftp.put(str(local_path), str(remote_path))
             sftp.close()
-            self.logger.info(f"Uploaded {local_path} to {remote_path}")
+            self.logger.info(f"Uploaded {local_path} to {remote_path} successfully.")
+            return True
         except Exception as e:
-            self.logger.error(f"Upload failed: {e}")
-            raise
+            self.logger.error(f"Upload {local_path} to {remote_path} failed: {e}")
+            return False
+        

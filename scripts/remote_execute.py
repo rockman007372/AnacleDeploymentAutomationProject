@@ -1,0 +1,80 @@
+import logging
+import os
+import json
+import sys
+from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.remote_client import Denis4Client
+
+def load_config(path: Path) -> dict:
+    with open(path, 'r') as f:
+        return json.load(f)
+
+def create_current_run_log_dir(root_dir: Path) -> Path:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return root_dir / "logs" / "remote_execute" / f'remote_execute_{timestamp}'
+
+def init_logger(log_dir: Path):
+    """Sets up logging to both console and file."""
+    log_file = log_dir / "app.log"
+
+    # Configure root logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
+    # File handler
+    file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+
+    # Formatter
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(threadName)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+
+    # Attach handlers
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
+
+if __name__ == "__main__":
+    file_directory = Path(__file__)
+    root_directory = file_directory.parent.parent
+    env_path = root_directory / "configs" / ".env"
+    config_path = root_directory / "configs" / "remote_execute_config.json"
+
+    log_dir = create_current_run_log_dir(root_directory)
+    log_dir.mkdir(parents=True, exist_ok=True)  
+
+    logger = init_logger(log_dir)
+
+    config = load_config(config_path)
+
+    load_dotenv(env_path)
+    config["log_dir"] = log_dir
+    config["server"] = os.getenv("denis4_server")
+    config["user"] = os.getenv("denis4_user")
+    config["password"] = os.getenv("denis4_password")
+
+    client = Denis4Client(config=config)
+    client.connect_to_denis4()
+
+    # test backup
+    base_backup_dir = Path(config["base_backup_dir"])
+    directories_to_backup = list(map(lambda dir: Path(dir), config.get("directories_to_backup", [])))
+    client.backup(directories_to_backup, base_backup_dir)
+
+    # test transfer file
+    local_file = root_directory / "README.md"
+    remote_file = Path("./Desktop/UAT_SP_script/README.md")
+    client.upload_file(local_file, remote_file)
