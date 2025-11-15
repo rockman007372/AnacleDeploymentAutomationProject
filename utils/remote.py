@@ -118,7 +118,7 @@ class Denis4Client():
         except:
             pass
 
-    def backup(self, directories_to_backup: List[Path], base_backup_dir: Path) -> bool:
+    def backup(self, directories_to_backup: List[Path], base_backup_dir: Path):
         '''
         Create backups at base backup directory for the given directories.
         Execute the "backup.bat" script on remote server, which backups 
@@ -137,8 +137,9 @@ class Denis4Client():
                 has_error = True
             else:
                 self.logger.info(f"✅ Backup {directory} successfully.")
-                
-        return (not has_error)
+        
+        if has_error:
+            raise RuntimeError("Some backups failed.")
     
     def upload_file(self, local_path: Path, remote_path: Path):
         """Upload a file to remote server"""
@@ -150,7 +151,7 @@ class Denis4Client():
             sftp.put(str(local_path), str(remote_path))
             self.logger.info(f"✅ Uploaded {local_path} to {remote_path}")
         except Exception as e:
-            self.logger.error(f"❌ Upload failed: {e}")
+            self.logger.exception(f"❌ Upload failed.")
             raise
         finally:
             sftp.close()  # Always closes, even on error
