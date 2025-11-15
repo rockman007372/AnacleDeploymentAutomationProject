@@ -149,10 +149,10 @@ class Builder:
             self.logger.error(f" Failed to create deployment package: {e}")
             sys.exit(1)
 
-    def publish(self):
+    def publish(self) -> Optional[Path]:
         """
         Publish webapp, service, TPAPI directories to a deployment directory 
-        and create an optional deployment zip package.
+        and create an optional deployment zip package. Returns the path of the deployment package if created. 
         """
         solution_dir: Path = Path(self.config["solution_dir"])
         publish_dir: Path = Path(self.config["publish_dir"]) / f"UAT_{datetime.now().strftime("%Y%m%d")}"
@@ -185,6 +185,7 @@ class Builder:
                     dest = config_dir / folder / cfg_file
                     self.move_file(source, dest)
 
+        zip_file = None
         if zip_output:
             self.logger.info("Zipping deployment package...")
             folders_to_zip = [str(publish_dir / f) for f in folders_to_copy]
@@ -192,3 +193,4 @@ class Builder:
             self.zip_with_7zip(folders_to_zip, zip_file)
 
         self.logger.info("✅ Actifact published successfully.")
+        return zip_file
