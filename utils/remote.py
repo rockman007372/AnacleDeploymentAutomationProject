@@ -140,19 +140,30 @@ class Denis4Client():
                 
         return (not has_error)
     
-    def upload_file(self, local_path: Path, remote_path: Path) -> bool:
+    def upload_file(self, local_path: Path, remote_path: Path):
         """Upload a file to remote server"""
         self.ensure_connected()
-        try:
-            sftp = self.ssh_client.open_sftp()
-            sftp.put(str(local_path), str(remote_path))
-            sftp.close()
-            self.logger.info(f"✅ Uploaded {local_path} to {remote_path} successfully.")
-            return True
-        except Exception as e:
-            self.logger.error(f"❌ Upload {local_path} to {remote_path} failed: {e}")
-            return False
         
+        sftp = self.ssh_client.open_sftp()
+        try:
+            self.ensure_remote_dir_exists(sftp, str(remote_path.parent))
+            sftp.put(str(local_path), str(remote_path))
+            self.logger.info(f"✅ Uploaded {local_path} to {remote_path}")
+        except Exception as e:
+            self.logger.error(f"❌ Upload failed: {e}")
+            raise
+        finally:
+            sftp.close()  # Always closes, even on error
+
+    def ensure_remote_dir_exists(self, sftp: paramiko.SFTPClient, remote_dir: str):
+        """Create remote directory if it doesn't exist"""
+        try:
+            sftp.mkdir(remote_dir)
+            self.logger.info(f"Created remote directory: {remote_dir}")
+        except IOError:
+            # Directory already exists, that's fine
+            pass
+    
     def stop_services(self, services: List[str]):
         """Stop a list of services"""
         self.ensure_connected()
