@@ -96,10 +96,7 @@ class DeploymentManager:
         self.builder.publish()
 
     def backup_remote(self):
-        remote_config = self.config["remote_config"]
-        directories_to_backup = list(map(lambda dir: Path(dir), remote_config["directories_to_backup"]))
-        base_backup_dir = Path(remote_config["base_backup_dir"])
-        self.remote_client.backup(directories_to_backup, base_backup_dir)
+        self.remote_client.backup()
     
     def upload_package_to_remote(self, deployment_package: Path):
         remote_config = self.config["remote_config"]

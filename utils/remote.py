@@ -22,6 +22,8 @@ class Denis4Client():
             "user", 
             "password", 
             "remote_scripts_dir",
+            "directories_to_backup",
+            "base_backup_dir"
         ]
         missing = [k for k in required_keys if k not in config]
         if missing:
@@ -118,7 +120,11 @@ class Denis4Client():
         except:
             pass
 
-    def backup(self, directories_to_backup: List[Path], base_backup_dir: Path):
+    def backup(
+            self, 
+            directories_to_backup: Optional[List[Path]] = None, 
+            base_backup_dir: Optional[Path] = None
+        ):
         '''
         Create backups at base backup directory for the given directories.
         Execute the "backup.bat" script on remote server, which backups 
@@ -126,6 +132,12 @@ class Denis4Client():
         '''
         remote_script_dir = Path(self.config["remote_scripts_dir"])
         backup_script = remote_script_dir / "backup.bat"
+
+        if not directories_to_backup:
+            directories_to_backup = list(map(lambda dir: Path(dir), self.config["directories_to_backup"]))
+
+        if not base_backup_dir:
+            base_backup_dir = Path(self.config["base_backup_dir"])
         
         has_error = False
         for directory in directories_to_backup:
