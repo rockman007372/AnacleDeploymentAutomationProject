@@ -99,6 +99,8 @@ class DeploymentManager:
         self.remote_client.backup()
     
     def upload_package_to_remote(self, deployment_package: Path):
+        if not deployment_package:
+            raise Exception("No deployment package created")
         self.remote_client.upload_deployment_package(deployment_package)
 
     def parallelize(self, tasks: List[Callable]) -> List:
@@ -135,15 +137,8 @@ class DeploymentManager:
                 # Do local work
                 self.build_projects()
                 results = self.parallelize([self.update_schema, self.publish_artifacts])
-
-                # Get the deployment package from publish_artifacts result
-                deployment_package = results[1] 
-
-                # Upload deployment package to remote if it exists
-                if not deployment_package:
-                    self.logger.warning("No deployment package created. Skips deploying to remote.")
-                else:
-                    self.upload_package_to_remote(deployment_package)
+                deployment_package = results[1]
+                self.upload_package_to_remote(deployment_package)
 
                 # Wait for backup status - exception raises here if failed
                 backup_future.result()
