@@ -21,9 +21,9 @@ REM ===== SCRIPT =====
 REM Check if source directory was provided as argument
 if "%~1"=="" (
     echo [ERROR] No source directory provided
-    echo Usage: %~nx0 "C:\Path\To\Source\Directory"
+    echo Usage: %~nx0 "C:\Path\To\Source\Directory" "D:\Path\To\Base\Backup\Directory"
     echo.
-    echo Example: %~nx0 "D:\MyBill_v10"
+    echo Example: %~nx0 "D:\MyBill_v10" "D:\Deployment Backup"
     exit /b 1
 )
 
@@ -39,6 +39,8 @@ REM Check if base backup directory was provided as argument
 if "%~2"=="" (
     echo [ERROR] No base backup directory provided
     echo Usage: %~nx0 "C:\Path\To\Source\Directory" "D:\Path\To\Base\Backup\Directory"
+    echo.
+    echo Example: %~nx0 "D:\MyBill_v10" "D:\Deployment Backup"
     exit /b 1
 )
 
