@@ -16,4 +16,4 @@ if __name__ == '__main__':
         config = json.load(f)
 
     deploy_manager = DeploymentManager(config)
-    deploy_manager.initiate_deployment()
+    deploy_manager.deploy()

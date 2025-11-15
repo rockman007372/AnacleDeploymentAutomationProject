@@ -82,7 +82,9 @@ class DeploymentManager:
         remote_config["server"] = os.getenv("denis4_server")
         remote_config["user"] = os.getenv("denis4_user")
         remote_config["password"] = os.getenv("denis4_password")
-        return Denis4Client(remote_config, self.logger)
+        client = Denis4Client(remote_config, self.logger)
+        client.connect_to_denis4()
+        return client
     
     def build_projects(self):
         self.builder.build()
@@ -93,8 +95,23 @@ class DeploymentManager:
     def publish_artifacts(self):
         self.builder.publish()
 
-    def parallelize(self, tasks: List[Callable]):
+    def backup_remote(self):
+        remote_config = self.config["remote_config"]
+        directories_to_backup = list(map(lambda dir: Path(dir), remote_config["directories_to_backup"]))
+        base_backup_dir = Path(remote_config["base_backup_dir"])
+        self.remote_client.backup(directories_to_backup, base_backup_dir)
+    
+    def upload_package_to_remote(self, deployment_package: Path):
+        remote_config = self.config["remote_config"]
+        base_deployment_dir = remote_config["base_deployment_dir"]
+        remote_file_path = base_deployment_dir / f"{datetime.now().strftime("%Y%m%d")}_mybill_v10" / deployment_package.name
+        self.remote_client.upload_file(deployment_package, remote_file_path)
+
+    def parallelize(self, tasks: List[Callable]) -> List:
         num_workers = min(len(tasks), 8)  # Capped at logical core numbers?
+        task_to_id = {task : id for id, task in enumerate(tasks)}
+        results = [None] * len(tasks)
+
         with ThreadPoolExecutor(max_workers=num_workers, thread_name_prefix="Worker") as executor:
             # Submit all tasks
             futures = {executor.submit(task): task for task in tasks}
@@ -104,15 +121,54 @@ class DeploymentManager:
                 task = futures[future]
                 try:
                     result = future.result()
+                    results[task_to_id[task]] = result
                     self.logger.info(f"Task {task.__name__} completed successfully")
                 except Exception as e:
                     self.logger.error(f"Task {task.__name__} failed: {e}")
                     sys.exit(1)
-    
-    def initiate_deployment(self):
+        
+        return results
+
+    def deploy(self):
         self.logger.info(f"Deployment process started.")
 
-        self.build_projects()
-        self.parallelize([self.update_schema, self.publish_artifacts])
+        backup_future = None
+        try:    
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                # Backup remote directories while doing local work
+                backup_future = executor.submit(self.backup_remote)
+                
+                # Do local work
+                self.build_projects()
+                results = self.parallelize([self.update_schema, self.publish_artifacts])
 
-        self.logger.info(f"Deployment process completed.")
+                # Get the deployment package from publish_artifacts result
+                deployment_package = results[1] 
+
+                # Upload deployment package to remote if it exists
+                if not deployment_package:
+                    self.logger.warning("No deployment package created. Skips deploying to remote.")
+                else:
+                    self.upload_package_to_remote(deployment_package)
+
+                # Wait for backup status - exception raises here if failed
+                backup_future.result()
+
+        except Exception:
+            self.logger.exception("❌ Deployment failed.")
+
+            if backup_future and not backup_future.done():
+                self.logger.warning("Remote backup is not completed.")
+                try:
+                    self.logger.info("Waiting for remote backup to complete...")
+                    backup_future.result(timeout=300)  # Wait up to 5 min
+                    self.logger.info("Backup completed.")
+                except Exception as e:
+                    self.logger.warning(f"Backup failed or timed out: {e}")
+
+            sys.exit(1)
+            
+        # Performs remote deployment tasks: Stop services, extract package, restart services.
+        self.logger.info(f"✅ Deployment process completed successfully.")
+
+        
