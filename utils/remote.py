@@ -126,19 +126,19 @@ class Denis4Client():
         '''
         remote_script_dir = Path(self.config["remote_scripts_dir"])
         backup_script = remote_script_dir / "backup.bat"
-
-        # TODO: paralellize? Maybe no need since publishing solution takes a longer time
+        
+        has_error = False
         for directory in directories_to_backup:
             self.logger.info(f"Backing up {directory}...")
             cmd = f'{backup_script} "{directory}" "{base_backup_dir}"'
             _, _, exit_code = self.execute_command(cmd)
             if exit_code != 0:
-                self.logger.error(f"Failed to backup {directory}. Check remote execution log for details.")
-                return False
-            self.logger.info(f"Back up {directory} successfully.")
-
-        self.logger.info("All backups completed.")
-        return True
+                self.logger.error(f"❌ Failed to backup {directory}. Check remote execution log for details.")
+                has_error = True
+            else:
+                self.logger.info(f"✅ Backup {directory} successfully.")
+                
+        return (not has_error)
     
     def upload_file(self, local_path: Path, remote_path: Path) -> bool:
         """Upload a file to remote server"""
@@ -147,10 +147,10 @@ class Denis4Client():
             sftp = self.ssh_client.open_sftp()
             sftp.put(str(local_path), str(remote_path))
             sftp.close()
-            self.logger.info(f"Uploaded {local_path} to {remote_path} successfully.")
+            self.logger.info(f"✅ Uploaded {local_path} to {remote_path} successfully.")
             return True
         except Exception as e:
-            self.logger.error(f"Upload {local_path} to {remote_path} failed: {e}")
+            self.logger.error(f"❌ Upload {local_path} to {remote_path} failed: {e}")
             return False
         
     def stop_services(self, services: List[str]):
@@ -165,9 +165,9 @@ class Denis4Client():
         self.logger.info(f"Stopping services: {services}...")
         _, _, exit_code = self.execute_command(cmd)
         if exit_code != 0:
-            self.logger.error(f"Failed to stop {services}. Check remote execution log for details.")
+            self.logger.error(f"❌ Failed to stop {services}. Check remote execution log for details.")
         else:
-            self.logger.info("Services stopped successfully.")
+            self.logger.info("✅ Services stopped successfully.")
 
         return exit_code == 0
         
@@ -183,9 +183,9 @@ class Denis4Client():
         self.logger.info(f"Starting services: {services}...")
         _, _, exit_code = self.execute_command(cmd)
         if exit_code != 0:
-            self.logger.error(f"Failed to start {services}. Check remote execution log for details.")
+            self.logger.error(f"❌ Failed to start {services}. Check remote execution log for details.")
         else:
-            self.logger.info("Services started successfully.")
+            self.logger.info("✅ Services started successfully.")
 
         return exit_code == 0
 
