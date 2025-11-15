@@ -213,11 +213,12 @@ class Denis4Client():
             self.logger.exception(f"❌ Upload deployment package failed.")
             raise
     
-    def stop_services(self, services: List[str]):
+    def stop_services(self):
         """Stop a list of services"""
         self.ensure_connected()
         remote_script_dir = Path(self.config["remote_scripts_dir"])
         stop_services_script = remote_script_dir / "stop_services.bat"
+        services: List[str] = self.config["services"] 
 
         arguments = ' '.join(map(lambda service: f'"{service}"', services))
         cmd = f'{stop_services_script} {arguments}'
@@ -231,11 +232,12 @@ class Denis4Client():
 
         return exit_code == 0
         
-    def start_services(self, services: List[str]):
+    def start_services(self):
         """Start a list of services"""
         self.ensure_connected()
         remote_script_dir = Path(self.config["remote_scripts_dir"])
         start_services_script = remote_script_dir / "start_services.bat"
+        services: List[str] = self.config["services"] 
 
         arguments = ' '.join(map(lambda service: f'"{service}"', services))
         cmd = f'{start_services_script} {arguments}'

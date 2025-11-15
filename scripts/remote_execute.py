@@ -75,6 +75,5 @@ if __name__ == "__main__":
     client._upload_file(local_file, remote_file)
 
     # test stopping and starting services
-    # services = config["services"]
-    # client.stop_services(services)
-    # client.start_services(services)
+    # client.stop_services()
+    # client.start_services()
