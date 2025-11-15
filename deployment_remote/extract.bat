@@ -83,7 +83,7 @@ for /l %%i in (1,1,%DEST_COUNT%) do (
     )
     
     :: Start robocopy in a new window (minimized) - /IS /IT overwrites existing files
-    start "Copying to !DEST!" /min cmd /c "robocopy "%TEMP_EXTRACT%" "!DEST!" /E /IS /IT /NFL /NDL /NJH /NJS /NC /NS /NP > "!LOG_FILE!" 2>&1 & echo ERRORLEVEL=!errorlevel! >> "!LOG_FILE!""
+    start "Copying to !DEST!" /min cmd /c "robocopy "%TEMP_EXTRACT%" "!DEST!" /E /IS /IT /NFL /NDL /NJH /NJS /NC /NS /NP > "!LOG_FILE!" 2>&1 & echo ERRORLEVEL=%%errorlevel%% >> "!LOG_FILE!""
     
     echo Started copy job %%i to: !DEST!
 )
