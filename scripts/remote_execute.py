@@ -69,17 +69,12 @@ if __name__ == "__main__":
     client = Denis4Client(config=config)
     client.connect_to_denis4()
 
-    # test backup
-    base_backup_dir = Path(config["base_backup_dir"])
-    directories_to_backup = list(map(lambda dir: Path(dir), config.get("directories_to_backup", [])))
-    client.backup(directories_to_backup, base_backup_dir)
-
     # test transfer file
     local_file = root_directory / "README.md"
-    remote_file = Path("./Desktop/UAT_SP_script/README.md")
-    client.upload_file(local_file, remote_file)
+    remote_file = Path("./Desktop/TestFileTransfer/README.md")
+    client._upload_file(local_file, remote_file)
 
     # test stopping and starting services
-    services = config["services"]
-    client.stop_services(services)
-    client.start_services(services)
+    # services = config["services"]
+    # client.stop_services(services)
+    # client.start_services(services)

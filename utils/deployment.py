@@ -99,10 +99,7 @@ class DeploymentManager:
         self.remote_client.backup()
     
     def upload_package_to_remote(self, deployment_package: Path):
-        remote_config = self.config["remote_config"]
-        base_deployment_dir = remote_config["base_deployment_dir"]
-        remote_file_path = base_deployment_dir / f"{datetime.now().strftime("%Y%m%d")}_mybill_v10" / deployment_package.name
-        self.remote_client.upload_file(deployment_package, remote_file_path)
+        self.remote_client.upload_deployment_package(deployment_package)
 
     def parallelize(self, tasks: List[Callable]) -> List:
         num_workers = min(len(tasks), 8)  # Capped at logical core numbers?

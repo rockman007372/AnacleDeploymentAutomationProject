@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -153,29 +154,64 @@ class Denis4Client():
         if has_error:
             raise RuntimeError("Some backups failed.")
     
-    def upload_file(self, local_path: Path, remote_path: Path):
+    def _make_directory_recursive(self, sftp: paramiko.SFTPClient, remote_dir: str):
+        """Create remote directory if it doesn't exist"""
+
+        def is_existing_dir(dir: str):
+            try:
+                sftp.stat(dir)
+                return True
+            except FileNotFoundError:
+                return False
+            
+        # Normalize path
+        remote_dir = remote_dir.replace('\\', '/')
+        remote_dir = remote_dir.rstrip("/")    # Avoid creating trailing empty dirs
+         
+        # base cases
+        if not remote_dir or remote_dir in ('/', '.', 'C:/', 'D:/', 'E:/'):
+            return
+        
+        if is_existing_dir(remote_dir):
+            return
+
+        parent = str(Path(remote_dir).parent)
+
+        # Safety: prevent infinite recursion if parent == current
+        if parent != remote_dir:
+            self._make_directory_recursive(sftp, parent)
+
+        # Create directory with error handling
+        try:
+            sftp.mkdir(remote_dir)
+            self.logger.info(f"Created directory: {remote_dir}")
+        except IOError as e:
+            self.logger.error(f"Failed to create {remote_dir}: {e}")
+            raise
+
+    def _upload_file(self, local_file: Path, remote_file: Path):
+        sftp = self.ssh_client.open_sftp()
+        try:
+            self._make_directory_recursive(sftp, str(remote_file.parent))
+            sftp.put(str(local_file), str(remote_file))
+        except Exception:
+            raise
+        finally:
+            sftp.close()
+
+    def upload_deployment_package(self, deployment_package: Path):
         """Upload a file to remote server"""
         self.ensure_connected()
         
-        sftp = self.ssh_client.open_sftp()
+        base_deployment_dir = self.config["base_deployment_dir"]
+        remote_file_path = base_deployment_dir / f"{datetime.now().strftime("%Y%m%d")}_mybill_v10" / deployment_package.name
+        
         try:
-            self.ensure_remote_dir_exists(sftp, str(remote_path.parent))
-            sftp.put(str(local_path), str(remote_path))
-            self.logger.info(f"✅ Uploaded {local_path} to {remote_path}")
-        except Exception as e:
-            self.logger.exception(f"❌ Upload failed.")
+            self._upload_file(deployment_package, remote_file_path)
+            self.logger.info(f"✅ Uploaded {deployment_package} to {remote_file_path}")
+        except Exception:
+            self.logger.exception(f"❌ Upload deployment package failed.")
             raise
-        finally:
-            sftp.close()  # Always closes, even on error
-
-    def ensure_remote_dir_exists(self, sftp: paramiko.SFTPClient, remote_dir: str):
-        """Create remote directory if it doesn't exist"""
-        try:
-            sftp.mkdir(remote_dir)
-            self.logger.info(f"Created remote directory: {remote_dir}")
-        except IOError:
-            # Directory already exists, that's fine
-            pass
     
     def stop_services(self, services: List[str]):
         """Stop a list of services"""
