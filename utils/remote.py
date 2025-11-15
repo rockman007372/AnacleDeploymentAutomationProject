@@ -199,8 +199,8 @@ class Denis4Client():
         finally:
             sftp.close()
 
-    def upload_deployment_package(self, deployment_package: Path):
-        """Upload a file to remote server"""
+    def upload_deployment_package(self, deployment_package: Path) -> Path:
+        """Upload a file to remote server. Returns the remote file path."""
         try:
             self.ensure_connected()
             if not deployment_package.exists():
@@ -209,6 +209,8 @@ class Denis4Client():
             remote_file_path = base_deployment_dir / f"{datetime.now().strftime("%Y%m%d")}_mybill_v10" / deployment_package.name
             self._upload_file(deployment_package, remote_file_path)
             self.logger.info(f"✅ Uploaded {deployment_package} to {remote_file_path}")
+            return remote_file_path
+        
         except Exception:
             self.logger.exception(f"❌ Upload deployment package failed.")
             raise
@@ -250,5 +252,9 @@ class Denis4Client():
             self.logger.info("✅ Services started successfully.")
 
         return exit_code == 0
+    
+    def extract_deployment_package(self, remote_file: Path):
+        pass
+
 
     

@@ -98,10 +98,20 @@ class DeploymentManager:
     def backup_remote(self):
         self.remote_client.backup()
     
-    def upload_package_to_remote(self, deployment_package: Path):
+    def upload_package_to_remote(self, deployment_package: Path) -> Path:
         if not deployment_package:
             raise Exception("No deployment package created")
-        self.remote_client.upload_deployment_package(deployment_package)
+        remote_file_path = self.remote_client.upload_deployment_package(deployment_package)
+        return remote_file_path
+    
+    def stop_services(self):
+        self.remote_client.stop_services()
+
+    def start_services(self):
+        self.remote_client.start_services()
+
+    def extract_deployment_package(self, remote_file: Path):
+        self.remote_client.extract_deployment_package(remote_file)
 
     def parallelize(self, tasks: List[Callable]) -> List:
         num_workers = min(len(tasks), 8)  # Capped at logical core numbers?
@@ -134,14 +144,19 @@ class DeploymentManager:
                 # Backup remote directories while doing local work
                 backup_future = executor.submit(self.backup_remote)
                 
-                # Do local work
+                # Perform local deployment tasks
                 self.build_projects()
                 results = self.parallelize([self.update_schema, self.publish_artifacts])
                 deployment_package = results[1]
-                self.upload_package_to_remote(deployment_package)
+                remote_package = self.upload_package_to_remote(deployment_package)
 
                 # Wait for backup status - exception raises here if failed
                 backup_future.result()
+
+                # Performs remote deployment tasks
+                self.stop_services()
+                self.extract_deployment_package(remote_package)
+                self.start_services()
 
         except Exception:
             self.logger.exception("❌ Deployment failed.")
@@ -157,7 +172,6 @@ class DeploymentManager:
 
             sys.exit(1)
             
-        # Performs remote deployment tasks: Stop services, extract package, restart services.
         self.logger.info(f"✅ Deployment process completed successfully.")
 
         
