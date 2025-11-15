@@ -44,6 +44,7 @@ class Builder:
         self.logger.info(f"{step_name} completed successfully.")
 
     def build(self, project_id: Optional[int]=None):
+        """Build LogicLayer, Service and publish TPAPI."""
         try:
             solution_dir = Path(self.config["solution_dir"])
             dev_cmd_path = Path(self.config["dev_cmd_path"])
