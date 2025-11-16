@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 import paramiko
 
@@ -268,6 +268,40 @@ class Denis4Client():
             
         self.logger.info(f'✅ Extract deloyment package successfully.')
         
+
+    def extract_deployment_package_no_script(self, remote_file: Path):
+        self.ensure_connected()
+        destinations: Iterable[Path] = map(lambda dest: Path(dest), self.config.get("directories_to_backup", []))
+
+        # Extract the zip package
+        sevenzip_path: Path = Path(self.config.get("7zip_path", "C:/Program Files/7-Zip/7z.exe"))
+        cmd = f'{sevenzip_path} "{remote_file}" -o*' # extract to a directory of the same name as the file
+        
+        self.logger.info(f"Extracting {remote_file}...")
+        _, _, exit_code = self.execute_command(cmd)
+        if exit_code != 0:
+            raise Exception("{remote_file} extraction failed.")
+        self.logger.info(f"{remote_file} extracted successfully.")
+
+        # Copy the package to destinations
+        extracted_package = remote_file.stem
+        for destination in destinations:
+            '''
+            /IS: Include Same => copy non-modified files
+            /IT: Include Tweaked => copy modifed files
+            /E: Recursively copy subdirectories, including Empty dirs
+            /NFL: No File List
+            /NDL: No Directory List
+            '''
+            cmd = f'robocopy "{extracted_package}" "{destination}" /IT /E /NFL /NDL' 
+
+            self.logger.info(f"Copying package {extracted_package} to {destination}...")
+            _, _, exit_code = self.execute_command(cmd)
+            if exit_code != 0:
+                raise Exception("{remote_file} extraction failed.")
+            self.logger.info(f"Copied {extracted_package} to {destination} successfully.")
+            
+
 
 
     
