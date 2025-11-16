@@ -20,7 +20,6 @@ class Builder:
             "solution_dir",
             "publish_dir",
             "remove_config_files",
-            "zip_output"
         ]
         missing_fields = [k for k in required_fields if k not in self.config]
         if missing_fields:
@@ -155,7 +154,6 @@ class Builder:
         """
         solution_dir: Path = Path(self.config["solution_dir"])
         publish_dir: Path = Path(self.config["publish_dir"]) / f"UAT_{datetime.now().strftime("%Y%m%d")}"
-        zip_output: bool = self.config.get("zip_output", True)
         remove_config_files = self.config.get("remove_config_files", True)
 
         folders_to_copy = ["webapp", "service", "TPAPI"] 
@@ -184,11 +182,9 @@ class Builder:
                     dest = config_dir / folder / cfg_file
                     self.move_file(source, dest)
 
-        if zip_output:
-            self.logger.info("Zipping deployment package...")
-            folders_to_zip = [str(publish_dir / f) for f in folders_to_copy]
-            zip_file = publish_dir / f'{publish_dir.name}.zip'
-            self.zip_with_7zip(folders_to_zip, zip_file)
-            return zip_file
-
+        self.logger.info("Zipping deployment package...")
+        folders_to_zip = [str(publish_dir / f) for f in folders_to_copy]
+        zip_file = publish_dir / f'{publish_dir.name}.zip'
+        self.zip_with_7zip(folders_to_zip, zip_file)
         self.logger.info("✅ Actifact published successfully.")
+        return zip_file

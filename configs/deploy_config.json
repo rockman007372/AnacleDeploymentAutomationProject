@@ -4,8 +4,7 @@
         "dev_cmd_path": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat",
         "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell/",
         "publish_dir": "D:/deployment/SP",
-        "remove_config_files": true,
-        "zip_output": true
+        "remove_config_files": true
     },
     "update_schema_config": {
         "url": "http://localhost/SP/applogin.aspx",
