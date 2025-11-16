@@ -96,10 +96,7 @@ class Denis4Client():
             
             if exit_code != 0:
                 self.logger.error(f"Command {command} failed with exit code {exit_code}")
-                self.logger.error(f"stderr: {stderr_text}")
-                return stdout_text, stderr_text, exit_code
                 
-            # Log stderr even on success (might contain warnings)
             if stderr_text:
                 self.logger.warning(f"stderr: {stderr_text}")
 
