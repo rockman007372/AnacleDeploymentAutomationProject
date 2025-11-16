@@ -204,7 +204,7 @@ class Denis4Client():
         try:
             self.ensure_connected()
             if not deployment_package.exists():
-                raise RuntimeError("No deployment package found.")
+                raise FileNotFoundError("No deployment package found.")
             base_deployment_dir = self.config["base_deployment_dir"]
             remote_file_path = base_deployment_dir / f"{datetime.now().strftime("%Y%m%d")}_mybill_v10" / deployment_package.name
             self._upload_file(deployment_package, remote_file_path)
@@ -254,7 +254,20 @@ class Denis4Client():
         return exit_code == 0
     
     def extract_deployment_package(self, remote_file: Path):
-        pass
+        self.ensure_connected()
+        remote_script_dir = Path(self.config["remote_scripts_dir"])
+        extract_script = remote_script_dir / "extract.bat"
+        destinations = self.config.get("directories_to_backup", [])
+        destinations_args = ' '.join(map(lambda dir: f'"{dir}"', destinations))
+        
+        cmd = f'{extract_script} "{remote_file}" {destinations_args}'
+        _, _, exit_code = self.execute_command(cmd)
+        if exit_code != 1:
+            self.logger.error(f'❌ Failed to extract deployment package {remote_file} to {destinations}.')
+            raise RuntimeError("Extract deployment package failed.")
+            
+        self.logger.info(f'✅ Extract deloyment package successfully.')
+        
 
 
     
