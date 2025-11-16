@@ -93,7 +93,7 @@ class Builder:
             if not src.exists():
                 raise NotADirectoryError(f"Source directory {src} does not exist")
             shutil.copytree(src, dst, dirs_exist_ok=True) # Create dst directory automatically
-            self.logger.info(f"Copied {src} to {dst}.")
+            self.logger.debug(f"Copied {src} to {dst}.")
         except Exception as e:
             self.logger.error(f"Error occured while copying {src} to {dst}: {e}")
             raise 
@@ -104,7 +104,7 @@ class Builder:
                 dst.parent.mkdir(parents=True, exist_ok=True) # must ensure dest dir exists
                 shutil.copy(src, dst)
                 os.remove(src)
-                self.logger.info(f"Moved {src} to {dst}.")
+                self.logger.debug(f"Moved {src} to {dst}.")
             except Exception as e:
                 self.logger.error(f"Error occured while moving {src} to {dst}: {e}")
                 raise

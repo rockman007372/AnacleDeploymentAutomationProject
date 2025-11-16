@@ -208,7 +208,7 @@ class Denis4Client():
             base_deployment_dir = Path(self.config["base_deployment_dir"])
             remote_file_path = base_deployment_dir / f"{datetime.now().strftime("%Y%m%d")}_mybill_v10" / deployment_package.name
             self._upload_file(deployment_package, remote_file_path)
-            self.logger.info(f"✅ Uploaded {deployment_package} to {remote_file_path}")
+            self.logger.info(f"✅ Uploaded deployment package to {remote_file_path}")
             return remote_file_path
         
         except Exception:
@@ -275,7 +275,7 @@ class Denis4Client():
 
         # Extract the zip package
         sevenzip_path: Path = Path(self.config.get("7zip_path", "C:/Program Files/7-Zip/7z.exe"))
-        cmd = f'"{sevenzip_path}" "{remote_file}" -o*' # extract to a directory of the same name as the file
+        cmd = f'"{sevenzip_path}" x "{remote_file}" -o* -y' # extract to a directory of the same name as the file
         
         self.logger.info(f"Extracting {remote_file}...")
         _, _, exit_code = self.execute_command(cmd)
