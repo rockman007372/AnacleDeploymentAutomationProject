@@ -275,12 +275,12 @@ class Denis4Client():
 
         # Extract the zip package
         sevenzip_path: Path = Path(self.config.get("7zip_path", "C:/Program Files/7-Zip/7z.exe"))
-        cmd = f'{sevenzip_path} "{remote_file}" -o*' # extract to a directory of the same name as the file
+        cmd = f'"{sevenzip_path}" "{remote_file}" -o*' # extract to a directory of the same name as the file
         
         self.logger.info(f"Extracting {remote_file}...")
         _, _, exit_code = self.execute_command(cmd)
         if exit_code != 0:
-            raise Exception("{remote_file} extraction failed.")
+            raise Exception(f"{remote_file} extraction failed.")
         self.logger.info(f"{remote_file} extracted successfully.")
 
         # Copy the package to destinations
