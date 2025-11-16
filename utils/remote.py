@@ -205,7 +205,7 @@ class Denis4Client():
             self.ensure_connected()
             if not deployment_package.exists():
                 raise FileNotFoundError("No deployment package found.")
-            base_deployment_dir = self.config["base_deployment_dir"]
+            base_deployment_dir = Path(self.config["base_deployment_dir"])
             remote_file_path = base_deployment_dir / f"{datetime.now().strftime("%Y%m%d")}_mybill_v10" / deployment_package.name
             self._upload_file(deployment_package, remote_file_path)
             self.logger.info(f"✅ Uploaded {deployment_package} to {remote_file_path}")
