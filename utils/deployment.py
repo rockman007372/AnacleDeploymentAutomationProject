@@ -92,8 +92,8 @@ class DeploymentManager:
     def update_schema(self):
         self.schema_updater.run()
 
-    def publish_artifacts(self):
-        self.builder.publish()
+    def publish_artifacts(self) -> Optional[Path]:
+        return self.builder.publish()
 
     def backup_remote(self):
         self.remote_client.backup()
