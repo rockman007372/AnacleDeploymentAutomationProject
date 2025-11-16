@@ -146,8 +146,8 @@ class DeploymentManager:
                 
                 # Perform local deployment tasks
                 self.build_projects()
-                results = self.parallelize([self.update_schema, self.publish_artifacts])
-                deployment_package = results[1]
+                results = self.parallelize([self.publish_artifacts, self.update_schema])
+                deployment_package = results[0]
                 remote_package = self.upload_package_to_remote(deployment_package)
 
                 # Wait for backup status - exception raises here if failed
