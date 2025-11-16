@@ -184,12 +184,11 @@ class Builder:
                     dest = config_dir / folder / cfg_file
                     self.move_file(source, dest)
 
-        zip_file = None
         if zip_output:
             self.logger.info("Zipping deployment package...")
             folders_to_zip = [str(publish_dir / f) for f in folders_to_copy]
-            zip_file = publish_dir / publish_dir.name
+            zip_file = publish_dir / f'{publish_dir.name}.zip'
             self.zip_with_7zip(folders_to_zip, zip_file)
+            return zip_file
 
         self.logger.info("✅ Actifact published successfully.")
-        return zip_file
