@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 from dotenv import load_dotenv
 
 from .builder import Builder
