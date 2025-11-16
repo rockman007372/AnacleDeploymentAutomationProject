@@ -4,7 +4,6 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict, List
 from typing import Callable, Dict, List, Optional
 from dotenv import load_dotenv
 
@@ -94,16 +93,13 @@ class DeploymentManager:
         self.schema_updater.run()
 
     def publish_artifacts(self) -> Optional[Path]:
-        return self.builder.publish()
 
     def backup_remote(self):
         self.remote_client.backup()
     
     def upload_package_to_remote(self, deployment_package: Path) -> Path:
-        if not deployment_package:
-            raise Exception("No deployment package created")
-        remote_file_path = self.remote_client.upload_deployment_package(deployment_package)
-        return remote_file_path
+        remote_package_path = self.remote_client.upload_deployment_package(deployment_package)
+        return remote_package_path
     
     def stop_services(self):
         self.remote_client.stop_services()

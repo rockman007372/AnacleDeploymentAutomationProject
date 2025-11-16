@@ -147,7 +147,7 @@ class Builder:
             self.logger.error(f" Failed to create deployment package: {e}")
             sys.exit(1)
 
-    def publish(self) -> Optional[Path]:
+    def publish(self) -> Path:
         """
         Publish webapp, service, TPAPI directories to a deployment directory 
         and create an optional deployment zip package. Returns the path of the deployment package if created. 
