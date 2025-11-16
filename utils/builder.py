@@ -17,7 +17,6 @@ class Builder:
     def validate_config(self):
         required_fields = [
             "dev_cmd_path",
-            "7zip_path",
             "solution_dir",
             "publish_dir",
             "remove_config_files",
@@ -25,7 +24,7 @@ class Builder:
         ]
         missing_fields = [k for k in required_fields if k not in self.config]
         if missing_fields:
-            raise Exception(f"Missing required field: {missing_fields}")
+            raise Exception(f'Missing required field: {missing_fields}')
 
     def get_projects(self):
         '''
@@ -115,8 +114,8 @@ class Builder:
     def zip_with_7zip(self, folders, zip_path):
         """Attempt to compress using external 7z.exe."""
         try:
-            sevenzip_path: Path = Path(self.config.get("7zip_path", "C:/Program Files/7-Zip/7z.exe"))
-            args = [sevenzip_path, 'a', '-tzip', str(zip_path)] + [str(f) for f in folders] + ['-mx=9']
+            # sevenzip_path: Path = Path(self.config.get("7zip_path", "C:/Program Files/7-Zip/7z.exe"))
+            args = ['7z', 'a', '-tzip', str(zip_path)] + [str(f) for f in folders] + ['-mx=9']
             result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
             if result.returncode == 0:

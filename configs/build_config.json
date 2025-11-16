@@ -1,6 +1,5 @@
 {
     "dev_cmd_path": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat",
-    "7zip_path": "C:/Program Files/7-Zip/7z.exe",
     "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell",
     "publish_dir": "D:/deployment/SP",
     "remove_config_files": true,
