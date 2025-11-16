@@ -207,8 +207,11 @@ class Denis4Client():
                 raise FileNotFoundError("No deployment package found.")
             base_deployment_dir = Path(self.config["base_deployment_dir"])
             remote_file_path = base_deployment_dir / f"{datetime.now().strftime("%Y%m%d")}_mybill_v10" / deployment_package.name
+            
+            self.logger.info(f"Uploading deployment package {deployment_package}...")
             self._upload_file(deployment_package, remote_file_path)
-            self.logger.info(f"✅ Uploaded deployment package to {remote_file_path}")
+            self.logger.info(f"✅ Deployment package uploaded to {remote_file_path}.")
+            
             return remote_file_path
         
         except Exception:
@@ -284,7 +287,7 @@ class Denis4Client():
         self.logger.info(f"{remote_file} extracted successfully.")
 
         # Copy the package to destinations
-        extracted_package = remote_file.stem
+        extracted_package: Path = remote_file.parent / remote_file.stem
         for destination in destinations:
             '''
             /IS: Include Same => copy non-modified files
@@ -298,7 +301,7 @@ class Denis4Client():
             self.logger.info(f"Copying package {extracted_package} to {destination}...")
             _, _, exit_code = self.execute_command(cmd)
             if exit_code != 0:
-                raise Exception("{remote_file} extraction failed.")
+                raise Exception(f"{remote_file} extraction failed.")
             self.logger.info(f"Copied {extracted_package} to {destination} successfully.")
             
 
