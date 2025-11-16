@@ -1,0 +1,24 @@
+{
+    "log_dir": "C:/Users/rockm/Desktop/Deployment Scripts/logs/deploy",
+    "build_config": {
+        "dev_cmd_path": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat",
+        "solution_dir": "C:/Anacle/SP/simplicity/abell.root/abell/",
+        "publish_dir": "D:/deployment/SP",
+        "remove_config_files": true,
+        "zip_output": true
+    },
+    "update_schema_config": {
+        "url": "http://localhost/SP/applogin.aspx",
+        "update_all_tables": false,
+        "tables": [],
+        "validate_script_before_execution": false,
+        "databases": ["abell.v10.0-MyBill-Deve", "abell.v10.0-MyBill-SP"]
+    },
+    "remote_config": {
+        "remote_scripts_dir": "./Desktop/UAT_SP_script",
+        "base_deployment_dir": "C:/SSHTesting/Deployment",
+        "base_backup_dir": "C:/SSHTesting/Deployment Backup",
+        "directories_to_backup": ["C:/SSHTesting/MyBill_v10", "C:/SSHTesting/MyBill_v10-SP"],
+        "services": ["Anacle.EAM v10.0 Simplicity Service (MyBill v10)", "Anacle.EAM v10.0 Simplicity Service (MyBill v10 - SP)"]
+    }
+}
