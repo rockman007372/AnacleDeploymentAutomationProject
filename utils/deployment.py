@@ -92,7 +92,9 @@ class DeploymentManager:
     def update_schema(self):
         self.schema_updater.run()
 
-    def publish_artifacts(self) -> Optional[Path]:
+    def publish_artifacts(self) -> Path:
+        deployment_package = self.builder.publish()
+        return deployment_package
 
     def backup_remote(self):
         self.remote_client.backup()
@@ -108,7 +110,7 @@ class DeploymentManager:
         self.remote_client.start_services()
 
     def extract_deployment_package(self, remote_file: Path):
-        self.remote_client.extract_deployment_package(remote_file)
+        self.remote_client.extract_deployment_package_no_script(remote_file)
 
     def parallelize(self, tasks: List[Callable]) -> List:
         num_workers = min(len(tasks), 8)  # Capped at logical core numbers?
@@ -137,23 +139,24 @@ class DeploymentManager:
 
         backup_future = None
         try:    
-            with ThreadPoolExecutor(max_workers=1) as executor:
+            with ThreadPoolExecutor(max_workers=1, thread_name_prefix="WorkerThread") as executor:
                 # Backup remote directories while doing local work
                 backup_future = executor.submit(self.backup_remote)
                 
                 # Perform local deployment tasks
                 self.build_projects()
-                results = self.parallelize([self.publish_artifacts, self.update_schema])
-                deployment_package = results[0]
-                remote_package = self.upload_package_to_remote(deployment_package)
+                deployment_package: Path = self.publish_artifacts()
+                remote_package: Path = self.upload_package_to_remote(deployment_package)
 
                 # Wait for backup status - exception raises here if failed
                 backup_future.result()
 
                 # Performs remote deployment tasks
+                update_schema_future = executor.submit(self.update_schema)
                 self.stop_services()
                 self.extract_deployment_package(remote_package)
                 self.start_services()
+                update_schema_future.result()
 
         except Exception:
             self.logger.exception("❌ Deployment failed.")
