@@ -94,8 +94,8 @@ class Denis4Client():
             stdout_text = stdout_text.replace("\r\n", "\n")
             stderr_text = stderr_text.replace("\r\n", "\n")
             
-            if exit_code != 0:
-                self.logger.error(f"Command {command} failed with exit code {exit_code}")
+            # if exit_code != 0:
+            #     self.logger.error(f"Command {command} failed with exit code {exit_code}")
                 
             if stderr_text:
                 self.logger.warning(f"stderr: {stderr_text}")
@@ -275,7 +275,8 @@ class Denis4Client():
 
         # Extract the zip package
         sevenzip_path: Path = Path(self.config.get("7zip_path", "C:/Program Files/7-Zip/7z.exe"))
-        cmd = f'"{sevenzip_path}" x "{remote_file}" -o* -y' # extract to a directory of the same name as the file
+        extracted_package: Path = remote_file.parent / remote_file.stem
+        cmd = f'"{sevenzip_path}" x "{remote_file}" -o"{extracted_package}" -y'
         
         self.logger.info(f"Extracting {remote_file}...")
         _, _, exit_code = self.execute_command(cmd)
@@ -284,7 +285,6 @@ class Denis4Client():
         self.logger.info(f"{remote_file} extracted successfully.")
 
         # Copy the package to destinations
-        extracted_package: Path = remote_file.parent / remote_file.stem
         for destination in destinations:
             '''
             /IS: Include Same => copy non-modified files
@@ -297,8 +297,9 @@ class Denis4Client():
 
             self.logger.info(f"Copying package {extracted_package} to {destination}...")
             _, _, exit_code = self.execute_command(cmd)
-            if exit_code != 0:
-                raise Exception(f"{remote_file} extraction failed.")
+            self.logger.debug(f'robocopy exits with code: {exit_code}')
+            if exit_code >= 8: # robocopy-specific exit code behaviour
+                raise Exception(f"Copying package to {destination} failed.")
             self.logger.info(f"Copied {extracted_package} to {destination} successfully.")
             
 
