@@ -1,4 +1,6 @@
 {
+    "server": "172.17.10.30",
+    "user": "nathan.tran",
     "remote_scripts_dir": ".\\Desktop\\UAT_SP_script",
     "base_deployment_dir": "D:\\Deployment",
     "base_backup_dir": "D:\\Deployment Backup",

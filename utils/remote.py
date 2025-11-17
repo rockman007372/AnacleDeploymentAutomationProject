@@ -21,7 +21,6 @@ class Denis4Client():
             "log_dir",
             "server", 
             "user", 
-            "password", 
             "remote_scripts_dir",
             "directories_to_backup",
             "base_backup_dir"
@@ -33,10 +32,9 @@ class Denis4Client():
     def connect_to_denis4(self):
         server = self.config.get("server", "")
         username = self.config.get("user", "")
-        password = self.config.get("password", "")
         try:
             self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            self.ssh_client.connect(server, username=username, password=password)
+            self.ssh_client.connect(server, username=username)
             self.logger.info(f"Connected to {username}@{server}")
         except Exception as e:
             self.logger.error(f"Failed to connect to {username}@{server}: {e}")

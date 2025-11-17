@@ -50,21 +50,13 @@ def init_logger(log_dir: Path):
 if __name__ == "__main__":
     file_directory = Path(__file__)
     root_directory = file_directory.parent.parent
-    env_path = root_directory / "configs" / ".env"
     config_path = root_directory / "configs" / "remote_execute_config.json"
 
     log_dir = create_current_run_log_dir(root_directory)
     log_dir.mkdir(parents=True, exist_ok=True)  
-
     logger = init_logger(log_dir)
-
     config = load_config(config_path)
-
-    load_dotenv(env_path)
     config["log_dir"] = log_dir
-    config["server"] = os.getenv("denis4_server")
-    config["user"] = os.getenv("denis4_user")
-    config["password"] = os.getenv("denis4_password")
 
     client = Denis4Client(config=config)
     client.connect_to_denis4()

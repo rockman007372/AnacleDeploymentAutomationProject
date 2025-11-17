@@ -14,6 +14,8 @@
         "databases": ["abell.v10.0-MyBill-Deve", "abell.v10.0-MyBill-SP"]
     },
     "remote_config": {
+        "server": "",
+        "user": "rockm",
         "remote_scripts_dir": "./Desktop/UAT_SP_script",
         "base_deployment_dir": "C:/SSHTesting/Deployment",
         "base_backup_dir": "C:/SSHTesting/Deployment Backup",

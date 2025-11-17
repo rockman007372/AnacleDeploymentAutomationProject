@@ -79,9 +79,6 @@ class DeploymentManager:
     def init_remote_client(self):
         remote_config = self.config.get("remote_config", {})
         remote_config["log_dir"] = self.log_dir
-        remote_config["server"] = os.getenv("denis4_server")
-        remote_config["user"] = os.getenv("denis4_user")
-        remote_config["password"] = os.getenv("denis4_password")
         client = Denis4Client(remote_config, self.logger)
         client.connect_to_denis4()
         return client
