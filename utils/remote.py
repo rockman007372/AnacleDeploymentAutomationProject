@@ -113,16 +113,9 @@ class Denis4Client():
         except:
             pass
 
-    def backup_no_script(
-            self, 
-            directories_to_backup: Optional[List[Path]] = None, 
-            base_backup_dir: Optional[Path] = None
-            ):
-        if not directories_to_backup:
-            directories_to_backup = list(map(lambda dir: Path(dir), self.config["directories_to_backup"]))
-
-        if not base_backup_dir:
-            base_backup_dir = Path(self.config["base_backup_dir"])
+    def backup_no_script(self):
+        directories_to_backup = list(map(lambda dir: Path(dir), self.config["directories_to_backup"]))
+        base_backup_dir = Path(self.config["base_backup_dir"])
         
         with self.ssh_client.open_sftp() as sftp:
             for dir_to_backup in directories_to_backup:
