@@ -95,7 +95,7 @@ class ScriptParser:
             
             # Detect the start of a table block
             if line_strip.startswith("print ('Syncing"):
-                current_table = line_strip.split()[2]  # Extract table name: [print, ('Syncing, [TableName],...]
+                current_table = line_strip.split()[2]  # Extract table name: ["print", "('Syncing", "[TableName]",...]
                 current_block = [line]
             
             # Accumulate lines in the current block
