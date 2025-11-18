@@ -2,6 +2,7 @@ import json
 import sys
 
 from pathlib import Path
+import time
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -16,4 +17,10 @@ if __name__ == '__main__':
         config = json.load(f)
 
     deploy_manager = DeploymentManager(config)
+
+    start = time.perf_counter()
     deploy_manager.deploy()
+    end = time.perf_counter()
+    
+    print(f"Elapsed: {end - start:.6f} seconds")
+

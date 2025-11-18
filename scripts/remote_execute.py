@@ -66,6 +66,9 @@ if __name__ == "__main__":
     client.backup_no_script()
     end = time.perf_counter()
 
+    # backup with no remote script, sequential: 85.297046 seconds
+    # backup with remote script: 83.676199 seconds
+    # doesnt matter, because build + publish + upload is the bottleneck
     logger.info(f"Elapsed: {end - start:.6f} seconds")
 
     # test transfer file
