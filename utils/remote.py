@@ -216,40 +216,41 @@ class Denis4Client():
     def stop_services(self):
         """Stop a list of services"""
         self.ensure_connected()
-        remote_script_dir = Path(self.config["remote_scripts_dir"])
-        stop_services_script = remote_script_dir / "stop_services.bat"
         services: List[str] = self.config["services"] 
 
-        arguments = ' '.join(map(lambda service: f'"{service}"', services))
-        cmd = f'{stop_services_script} {arguments}'
+        is_success = True
+        for service in services:
+            self.logger.info(f'Stopping service: "{service}"...')
+            cmd = f'net stop "{service}"'
+            _, _, exit_code = self.execute_command(cmd)
+            if exit_code != 0:
+                self.logger.error(f'❌ Failed to stop "{service}". Check remote execution log for details.')
+                is_success = False
+            else:
+                self.logger.info(f'✅ Service "{service}" stopped successfully.')
 
-        self.logger.info(f"Stopping services: {services}...")
-        _, _, exit_code = self.execute_command(cmd)
-        if exit_code != 0:
-            self.logger.error(f"❌ Failed to stop {services}. Check remote execution log for details.")
-        else:
-            self.logger.info("✅ Services stopped successfully.")
+        if not is_success:
+            raise Exception("Some services failed to stop.")
 
-        return exit_code == 0
-        
     def start_services(self):
         """Start a list of services"""
         self.ensure_connected()
-        remote_script_dir = Path(self.config["remote_scripts_dir"])
-        start_services_script = remote_script_dir / "start_services.bat"
         services: List[str] = self.config["services"] 
 
-        arguments = ' '.join(map(lambda service: f'"{service}"', services))
-        cmd = f'{start_services_script} {arguments}'
+        is_success = True
+        for service in services:
+            self.logger.info(f'Starting service: "{service}"...')
+            cmd = f'net start "{service}"'
+            _, _, exit_code = self.execute_command(cmd)
+            if exit_code != 0:
+                self.logger.error(f'❌ Failed to start "{service}". Check remote execution log for details.')
+                is_success = False
+            else:
+                self.logger.info(f'✅ Service "{service}" started successfully.')
 
-        self.logger.info(f"Starting services: {services}...")
-        _, _, exit_code = self.execute_command(cmd)
-        if exit_code != 0:
-            self.logger.error(f"❌ Failed to start {services}. Check remote execution log for details.")
-        else:
-            self.logger.info("✅ Services started successfully.")
-
-        return exit_code == 0
+        if not is_success:
+            raise Exception("Some services failed to start.")
+       
     
     def extract_deployment_package(self, remote_file: Path):
         self.ensure_connected()
