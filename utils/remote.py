@@ -91,9 +91,6 @@ class Denis4Client():
             # Normalize Windows CRLF → LF
             stdout_text = stdout_text.replace("\r\n", "\n")
             stderr_text = stderr_text.replace("\r\n", "\n")
-            
-            # if exit_code != 0:
-            #     self.logger.error(f"Command {command} failed with exit code {exit_code}")
                 
             if stderr_text:
                 self.logger.warning(f"stderr: {stderr_text}")
