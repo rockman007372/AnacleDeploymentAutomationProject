@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from .builder import Builder
 from .pipeline import SQLDeploymentPipeline
-from .remote import Denis4Client
+from .remote import Denis4ClientFactory, Denis4Client
 
 class DeploymentManager:
     def __init__(self, config: Dict) -> None:
@@ -23,7 +23,7 @@ class DeploymentManager:
         # Initiate helper classes
         self.builder = self.init_builder()
         self.schema_updater = self.init_schema_updater()
-        self.remote_client = self.init_remote_client()
+        self.client_factory = self.init_client_factory()
 
     def init_env(self):
         file_directory = Path(__file__)
@@ -76,12 +76,10 @@ class DeploymentManager:
         }
         return SQLDeploymentPipeline(update_schema_config, db_connection, self.log_dir, self.logger)
 
-    def init_remote_client(self):
+    def init_client_factory(self):
         remote_config = self.config.get("remote_config", {})
         remote_config["log_dir"] = self.log_dir
-        client = Denis4Client(remote_config, self.logger)
-        client.connect_to_denis4()
-        return client
+        return Denis4ClientFactory(remote_config, self.logger)
     
     def build_projects(self):
         self.builder.build()
@@ -92,23 +90,7 @@ class DeploymentManager:
     def publish_artifacts(self) -> Path:
         deployment_package = self.builder.publish()
         return deployment_package
-
-    def backup_remote(self):
-        self.remote_client.backup()
     
-    def upload_package_to_remote(self, deployment_package: Path) -> Path:
-        remote_package_path = self.remote_client.upload_deployment_package(deployment_package)
-        return remote_package_path
-    
-    def stop_services(self):
-        self.remote_client.stop_services()
-
-    def start_services(self):
-        self.remote_client.start_services()
-
-    def extract_deployment_package(self, remote_file: Path):
-        self.remote_client.extract_deployment_package_no_script(remote_file)
-
     def parallelize(self, tasks: List[Callable]) -> List:
         num_workers = min(len(tasks), 8)  # Capped at logical core numbers?
         task_to_id = {task : id for id, task in enumerate(tasks)}
@@ -133,26 +115,28 @@ class DeploymentManager:
 
     def deploy(self):
         self.logger.info(f"Deployment process started.")
-
+        
         backup_future = None
         try:    
+            main_client = self.client_factory.spawn_client()
+            backup_client = self.client_factory.spawn_client()
             with ThreadPoolExecutor(max_workers=1, thread_name_prefix="WorkerThread") as executor:
                 # Backup remote directories while doing local work
-                backup_future = executor.submit(self.backup_remote)
+                backup_future = executor.submit(backup_client.backup_no_script)
                 
                 # Perform local deployment tasks
                 self.build_projects()
                 deployment_package: Path = self.publish_artifacts()
-                remote_package: Path = self.upload_package_to_remote(deployment_package)
+                remote_package: Path = main_client.upload_deployment_package(deployment_package)
 
                 # Wait for backup status - exception raises here if failed
                 backup_future.result()
 
                 # Performs remote deployment tasks
                 update_schema_future = executor.submit(self.update_schema)
-                self.stop_services()
-                self.extract_deployment_package(remote_package)
-                self.start_services()
+                main_client.stop_services()
+                main_client.extract_deployment_package_no_script(remote_package)
+                main_client.start_services()
                 update_schema_future.result()
 
         except Exception:

@@ -8,13 +8,14 @@ import paramiko
 # Module-level fallback logger
 module_logger = logging.getLogger(__name__)
 
-class Denis4Client():
+class Denis4ClientFactory():
+    '''
+    Factory class to creates new Denis4 client. Each client owns a single paramiko's SSHCLient.
+    '''
     def __init__(self, config: Dict, logger: Optional[logging.Logger] = None) -> None:
         self.validate_config(config)
         self.config = config
         self.logger = logger or module_logger
-        self.ssh_client = paramiko.SSHClient()
-        self.execution_log = self.get_execution_log_file()
 
     def validate_config(self, config: Dict):
         required_keys = [
@@ -28,6 +29,22 @@ class Denis4Client():
         missing = [k for k in required_keys if k not in config]
         if missing:
             raise ValueError(f"Missing required config keys: {missing}")
+        
+    def spawn_client(self):
+        return Denis4Client(self.config, self.logger)
+
+class Denis4Client():
+    '''
+    Each Denis4 client establishes a single SSH connection with Denis4 server.
+    '''
+    def __init__(self, config: Dict, logger: Optional[logging.Logger] = None) -> None:
+        self.config = config
+        self.logger = logger or module_logger
+        self.execution_log = self.get_execution_log_file()
+
+        self.ssh_client = paramiko.SSHClient()
+        self.connect_to_denis4()
+        
 
     def connect_to_denis4(self):
         server = self.config.get("server", "")
