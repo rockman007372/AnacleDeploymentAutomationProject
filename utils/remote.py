@@ -190,7 +190,10 @@ class Denis4Client():
             raise RuntimeError("Some backups failed.")
     
     def _make_directory_recursive(self, sftp: paramiko.SFTPClient, remote_dir: str):
-        """Create remote directory if it doesn't exist"""
+        """
+        Create remote directory if it doesn't exist. 
+        Remote directory has to be in posix format.
+        """
 
         def is_existing_dir(dir: str):
             try:
@@ -200,7 +203,7 @@ class Denis4Client():
                 return False
             
         # Normalize path
-        remote_dir = remote_dir.replace('\\', '/')
+        # remote_dir = remote_dir.replace('\\', '/')
         remote_dir = remote_dir.rstrip("/")    # Avoid creating trailing empty dirs
          
         # base cases
@@ -227,7 +230,7 @@ class Denis4Client():
     def _upload_file(self, local_file: Path, remote_file: Path):
         sftp = self.ssh_client.open_sftp()
         try:
-            self._make_directory_recursive(sftp, str(remote_file.parent))
+            self._make_directory_recursive(sftp, remote_file.parent.as_posix())
             sftp.put(str(local_file), str(remote_file))
         except Exception:
             raise
