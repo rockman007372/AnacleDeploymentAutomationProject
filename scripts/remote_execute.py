@@ -61,10 +61,13 @@ if __name__ == "__main__":
     client = Denis4Client(config=config)
     client.connect_to_denis4()
 
+    # test backup
+    client.backup_no_script()
+
     # test transfer file
-    local_file = root_directory / "README.md"
-    remote_file = Path("./Desktop/TestFileTransfer/README.md")
-    client._upload_file(local_file, remote_file)
+    # local_file = root_directory / "README.md"
+    # remote_file = Path("./Desktop/TestFileTransfer/README.md")
+    # client._upload_file(local_file, remote_file)
 
     # test stopping and starting services
     # client.stop_services()

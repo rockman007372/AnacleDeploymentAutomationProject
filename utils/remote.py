@@ -113,6 +113,40 @@ class Denis4Client():
         except:
             pass
 
+    def backup_no_script(
+            self, 
+            directories_to_backup: Optional[List[Path]] = None, 
+            base_backup_dir: Optional[Path] = None
+            ):
+        if not directories_to_backup:
+            directories_to_backup = list(map(lambda dir: Path(dir), self.config["directories_to_backup"]))
+
+        if not base_backup_dir:
+            base_backup_dir = Path(self.config["base_backup_dir"])
+        
+        with self.ssh_client.open_sftp() as sftp:
+            for dir_to_backup in directories_to_backup:
+                self.logger.info(f'Backing up {dir_to_backup}...')
+
+                # Create backup directory with today's date
+                today = datetime.now().strftime("%Y%m%d")
+                backup_dir = base_backup_dir / f'{today}_{dir_to_backup.name}'
+                try:
+                    sftp.mkdir(backup_dir.as_posix())
+                    self.logger.info(f'Created backup directory {backup_dir}.')
+                except IOError:
+                    self.logger.warning(f'Backup directory {backup_dir} already exists.')
+
+                # Zip webapp, service and TPAPI folders and store it in backup directory
+                output_zip = backup_dir / f'{dir_to_backup.name}.7z'
+                cmd = f'cd /d "{dir_to_backup}" && 7z a -tzip "{output_zip}" webapp service TPAPI'
+                self.logger.info(f"Compressing webapp, service, TPAPI into {output_zip}...")
+                _, _, exit_code = self.execute_command(cmd)
+                if exit_code != 0:
+                    raise Exception(f'❌ Failed to backup {dir_to_backup}. Check remote execution logs for details.')
+                
+                self.logger.info(f'✅ Backup {dir_to_backup} successfully.')
+
     def backup(
             self, 
             directories_to_backup: Optional[List[Path]] = None, 
