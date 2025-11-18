@@ -44,7 +44,6 @@ class Denis4Client():
 
         self.ssh_client = paramiko.SSHClient()
         self.connect_to_denis4()
-        
 
     def connect_to_denis4(self):
         server = self.config.get("server", "")

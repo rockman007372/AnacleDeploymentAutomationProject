@@ -4,11 +4,12 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
+import time
 from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.remote import Denis4Client
+from utils.remote import Denis4Client, Denis4ClientFactory
 
 def load_config(path: Path) -> dict:
     with open(path, 'r') as f:
@@ -58,11 +59,14 @@ if __name__ == "__main__":
     config = load_config(config_path)
     config["log_dir"] = log_dir
 
-    client = Denis4Client(config=config)
-    client.connect_to_denis4()
+    client = Denis4ClientFactory(config).spawn_client()
 
     # test backup
+    start = time.perf_counter()
     client.backup_no_script()
+    end = time.perf_counter()
+
+    logger.info(f"Elapsed: {end - start:.6f} seconds")
 
     # test transfer file
     # local_file = root_directory / "README.md"
