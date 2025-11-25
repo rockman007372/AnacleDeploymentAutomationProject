@@ -91,6 +91,13 @@ class DeploymentManager:
         deployment_package = self.builder.publish()
         return deployment_package
     
+    def backup_then_stop_services(self):
+        # Use a separate client to separate from the main client.
+        # This is because the clients are not thread-safe.
+        client = self.client_factory.spawn_client()
+        client.backup()
+        client.start_services()
+    
     def parallelize(self, tasks: List[Callable]) -> List:
         num_workers = min(len(tasks), 8)  # Capped at logical core numbers?
         task_to_id = {task : id for id, task in enumerate(tasks)}
@@ -119,10 +126,10 @@ class DeploymentManager:
         backup_future = None
         try:    
             main_client = self.client_factory.spawn_client()
-            backup_client = self.client_factory.spawn_client()
+            
             with ThreadPoolExecutor(max_workers=1, thread_name_prefix="WorkerThread") as executor:
-                # Backup remote directories while doing local work
-                backup_future = executor.submit(backup_client.backup_no_script)
+                # Backup remote directories and stop services while deploying locally
+                backup_future = executor.submit(self.backup_then_stop_services)
                 
                 # Perform local deployment tasks
                 self.build_projects()
@@ -134,7 +141,6 @@ class DeploymentManager:
 
                 # Performs remote deployment tasks
                 update_schema_future = executor.submit(self.update_schema)
-                main_client.stop_services()
                 main_client.extract_deployment_package_no_script(remote_package)
                 main_client.start_services()
                 update_schema_future.result()
