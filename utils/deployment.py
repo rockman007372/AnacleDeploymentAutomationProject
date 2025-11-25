@@ -96,7 +96,7 @@ class DeploymentManager:
         # This is because the clients are not thread-safe.
         client = self.client_factory.spawn_client()
         client.backup()
-        client.start_services()
+        client.stop_services()
     
     def parallelize(self, tasks: List[Callable]) -> List:
         num_workers = min(len(tasks), 8)  # Capped at logical core numbers?
